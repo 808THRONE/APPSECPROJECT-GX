@@ -89,7 +89,7 @@ A comprehensive identity and access management system featuring:
 ##  Project Structure
 
 ```
-MBK/
+APPSECPROJECT-GX/
 ├── README.md                          # This file
 ├── package.json                       # Frontend dependencies
 ├── pwa-frontend/                      # Progressive Web App
