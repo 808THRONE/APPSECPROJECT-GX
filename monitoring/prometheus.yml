@@ -1,0 +1,27 @@
+# Prometheus Configuration
+# Monitoring for SecureGate IAM Portal
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# TODO: Configure scrape targets for:
+# - WildFly metrics (IAM service)
+# - WildFly metrics (API gateway)
+# - PostgreSQL exporter
+# - Redis exporter
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # WildFly IAM Service
+  - job_name: 'wildfly-iam'
+    static_configs:
+      - targets: ['iam.yourdomain.me:9990']
+
+  # WildFly API Gateway
+  - job_name: 'wildfly-api'
+    static_configs:
+      - targets: ['api.yourdomain.me:9990']

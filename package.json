@@ -1,0 +1,22 @@
+{
+  "name": "securegate-iam-portal",
+  "version": "1.0.0",
+  "description": "Enterprise PWA with Zero Trust Architecture & Data Dissimulation",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "lit": "^3.1.0",
+    "zustand": "^4.4.7",
+    "dompurify": "^3.0.8",
+    "reconnecting-websocket": "^4.4.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.10",
+    "vite-plugin-pwa": "^0.17.4",
+    "workbox-window": "^7.0.0"
+  }
+}

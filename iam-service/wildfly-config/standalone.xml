@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- WildFly 38.0.1.Final Standalone Configuration -->
+<!-- TODO: Configure for Jakarta EE 11 with security hardening -->
+
+<!-- Key Configuration Areas:
+1. Remove EJB3 subsystem (CVE-2025-2251 mitigation)
+2. Configure Undertow with HTTP/2 and TLS 1.3
+3. Set up Elytron security domains
+4. Configure management interface (localhost only)
+5. Disable unnecessary subsystems
+-->
+
+<!-- This is a placeholder - actual standalone.xml will be configured during Phase 2 -->

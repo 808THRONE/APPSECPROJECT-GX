@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 16.1
+  postgres:
+    image: postgres:16.1
+    container_name: securegate-postgres
+    environment:
+      POSTGRES_DB: securegate
+      POSTGRES_USER: securegate
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres-init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - securegate-network
+
+  # Redis 7.2 Cluster (3 masters + 3 replicas)
+  redis-master-1:
+    image: redis:7.2
+    container_name: securegate-redis-master-1
+    command: redis-server --port 6379 --cluster-enabled yes --cluster-config-file nodes.conf
+    volumes:
+      - redis-master-1-data:/data
+    networks:
+      - securegate-network
+
+  # TODO: Add remaining Redis nodes (master-2, master-3, replica-1, replica-2, replica-3)
+
+  # MinIO (S3-compatible object storage)
+  minio:
+    image: minio/minio:latest
+    container_name: securegate-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio-data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    networks:
+      - securegate-network
+
+  # HashiCorp Vault
+  vault:
+    image: vault:1.15
+    container_name: securegate-vault
+    cap_add:
+      - IPC_LOCK
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: ${VAULT_ROOT_TOKEN}
+    ports:
+      - "8200:8200"
+    networks:
+      - securegate-network
+
+  # Traefik (Reverse Proxy)
+  traefik:
+    image: traefik:3.0
+    container_name: securegate-traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik.yml:/etc/traefik/traefik.yml
+    networks:
+      - securegate-network
+
+volumes:
+  postgres-data:
+  redis-master-1-data:
+  minio-data:
+
+networks:
+  securegate-network:
+    driver: bridge
