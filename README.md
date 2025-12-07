@@ -14,7 +14,7 @@ A comprehensive identity and access management system featuring:
 - **Zero Trust Security** - Continuous verification with no implicit trust
 - **OAuth 2.1 + PASETO v4** - Modern authentication with algorithm confusion protection
 - **ABAC Policy Engine** - Attribute-Based Access Control with visual policy builder
-- **AES-256-GCM + LSB-DCT Steganography** - Covert data transmission
+- **AES-256-GCM + I forgot which dissimulation algorithm ** - Covert data transmission
 - **Progressive Web App** - Offline-first with service worker
 - **Multi-Factor Authentication** - TOTP-based 2FA with QR enrollment
 - **Real-time Audit Logging** - WebSocket-based security event streaming
