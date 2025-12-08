@@ -1,6 +1,8 @@
 package com.securegate.session;
 
-public class SessionStore {
+import redis.clients.jedis.JedisPooled;
+
+public class SessionManager {
 
     private static final JedisPooled redis = new JedisPooled("localhost", 6379);
 

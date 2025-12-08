@@ -23,19 +23,23 @@
 
     <dependencies>
 
-        <!-- JAX-RS (REST Endpoints) -->
+        <!-- Jakarta EE 10 API -->
         <dependency>
-            <groupId>jakarta.ws.rs</groupId>
-            <artifactId>jakarta.ws.rs-api</artifactId>
-            <version>4.0.0</version>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>10.0.0</version>
+            <scope>provided</scope>
         </dependency>
 
-        <!-- JSON-B -->
+        <!-- Nimbus JOSE + JWT -->
         <dependency>
-            <groupId>jakarta.json.bind</groupId>
-            <artifactId>jakarta.json.bind-api</artifactId>
-            <version>3.0.0</version>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>nimbus-jose-jwt</artifactId>
+            <version>9.37.3</version>
         </dependency>
+
+        <!-- JAX-RS (REST Endpoints) - Provided by Jakarta EE API, but keeping if specific version needed or removing to avoid conflicts -->
+        <!-- Removing specific JAX-RS and JSON-B as they are included in Jakarta EE API -->
 
         <!-- PostgreSQL driver -->
         <dependency>
@@ -54,8 +58,20 @@
         <!-- PASETO v4 tokens -->
         <dependency>
             <groupId>dev.paseto</groupId>
-            <artifactId>paseto</artifactId>
-            <version>1.1.0</version>
+            <artifactId>jpaseto-api</artifactId>
+            <version>0.7.0</version>
+        </dependency>
+        <dependency>
+            <groupId>dev.paseto</groupId>
+            <artifactId>jpaseto-impl</artifactId>
+            <version>0.7.0</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>dev.paseto</groupId>
+            <artifactId>jpaseto-jackson</artifactId>
+            <version>0.7.0</version>
+            <scope>runtime</scope>
         </dependency>
 
         <!-- TOTP (2FA) -->
@@ -75,6 +91,28 @@
             <groupId>redis.clients</groupId>
             <artifactId>jedis</artifactId>
             <version>5.1.0</version>
+        </dependency>
+        
+        <!-- MicroProfile Config if needed (often provided by WildFly) -->
+        <dependency>
+            <groupId>org.eclipse.microprofile.config</groupId>
+            <artifactId>microprofile-config-api</artifactId>
+            <version>3.0.2</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Paho MQTT v5 Client -->
+        <dependency>
+            <groupId>org.eclipse.paho</groupId>
+            <artifactId>org.eclipse.paho.mqttv5.client</artifactId>
+            <version>1.2.5</version>
+        </dependency>
+
+        <!-- Argon2 Password Hashing -->
+        <dependency>
+            <groupId>de.mkammerer</groupId>
+            <artifactId>argon2-jvm</artifactId>
+            <version>2.11</version>
         </dependency>
 
     </dependencies>
