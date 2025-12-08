@@ -1,6 +1,12 @@
-package com.securegate.tokens;
+public class PasetoService {
 
-// TODO: Implement PASETO v4 Token Service
-// - Asymmetric public key cryptography (Ed25519)
-// - Token issuance/rotation/revocation
-// - Audience validation
+    private static final String PRIVATE_KEY = "your-private-key-here";
+
+    public static String createAccessToken(String userId) {
+        return Paseto.V4.LOCAL.builder()
+                .setSubject(userId)
+                .setExpiration(ZonedDateTime.now().plusHours(1))
+                .claim("role", "admin")
+                .compact();
+    }
+}

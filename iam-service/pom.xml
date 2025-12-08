@@ -22,32 +22,62 @@
     </properties>
 
     <dependencies>
-        <!-- Jakarta EE 11 -->
+
+        <!-- JAX-RS (REST Endpoints) -->
         <dependency>
-            <groupId>jakarta.platform</groupId>
-            <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>${jakarta.version}</version>
-            <scope>provided</scope>
+            <groupId>jakarta.ws.rs</groupId>
+            <artifactId>jakarta.ws.rs-api</artifactId>
+            <version>4.0.0</version>
         </dependency>
 
-        <!-- OAuth 2.1 Dependencies -->
-        <!-- TODO: Add nimbus-jose-jwt for JWT -->
-        <!-- TODO: Add jpaseto for PASETO v4 -->
-        
-        <!-- 2FA Dependencies -->
-        <!-- TODO: Add aerogear-otp-java for TOTP -->
-        <!-- TODO: Add ZXing for QR codes -->
-        
-        <!-- Database -->
-        <!-- TODO: Add PostgreSQL JDBC driver -->
-        
-        <!-- Redis for sessions -->
-        <!-- TODO: Add Jedis or Lettuce -->
-        
-        <!-- HashiCorp Vault -->
-        <!-- TODO: Add Vault Java client -->
-    </dependencies>
+        <!-- JSON-B -->
+        <dependency>
+            <groupId>jakarta.json.bind</groupId>
+            <artifactId>jakarta.json.bind-api</artifactId>
+            <version>3.0.0</version>
+        </dependency>
 
+        <!-- PostgreSQL driver -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.7.2</version>
+        </dependency>
+
+        <!-- BCrypt hashing -->
+        <dependency>
+            <groupId>org.mindrot</groupId>
+            <artifactId>jbcrypt</artifactId>
+            <version>0.4</version>
+        </dependency>
+
+        <!-- PASETO v4 tokens -->
+        <dependency>
+            <groupId>dev.paseto</groupId>
+            <artifactId>paseto</artifactId>
+            <version>1.1.0</version>
+        </dependency>
+
+        <!-- TOTP (2FA) -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>3.5.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>javase</artifactId>
+            <version>3.5.1</version>
+        </dependency>
+
+        <!-- Redis client -->
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>5.1.0</version>
+        </dependency>
+
+    </dependencies>
     <build>
         <finalName>${project.artifactId}</finalName>
         <plugins>
