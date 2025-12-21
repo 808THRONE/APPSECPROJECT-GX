@@ -1,0 +1,8 @@
+com\securegate\mfa\TotpEnrollmentService.class
+com\securegate\security\RateLimitingFilter.class
+com\securegate\oauth\OAuthAuthorizationServer.class
+com\securegate\IamApplication.class
+com\securegate\user\UserRepository.class
+com\securegate\session\SessionManager.class
+com\securegate\tokens\JwtValidationFilter.class
+com\securegate\tokens\PasetoService.class

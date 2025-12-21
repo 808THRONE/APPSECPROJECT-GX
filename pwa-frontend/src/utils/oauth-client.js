@@ -4,8 +4,8 @@
  */
 
 const OAUTH_CONFIG = {
-    authorizationEndpoint: import.meta.env.VITE_IAM_URL || 'https://iam.yourdomain.me/oauth/authorize',
-    tokenEndpoint: import.meta.env.VITE_IAM_URL || 'https://iam.yourdomain.me/oauth/token',
+    authorizationEndpoint: import.meta.env.VITE_IAM_URL || 'http://localhost:8080/rest-iam/oauth/authorize',
+    tokenEndpoint: import.meta.env.VITE_IAM_URL || 'http://localhost:8080/rest-iam/oauth/token',
     clientId: import.meta.env.VITE_OAUTH_CLIENT_ID || 'securegate-pwa',
     redirectUri: import.meta.env.VITE_OAUTH_REDIRECT_URI || window.location.origin + '/callback',
     scope: 'openid profile email',
@@ -19,13 +19,11 @@ async function generatePKCE() {
     const array = new Uint8Array(32);
     crypto.getRandomValues(array);
     const codeVerifier = base64UrlEncode(array);
-
     // Generate code challenge (SHA-256 hash of verifier)
     const encoder = new TextEncoder();
     const data = encoder.encode(codeVerifier);
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
     const codeChallenge = base64UrlEncode(new Uint8Array(hashBuffer));
-
     return {
         codeVerifier,
         codeChallenge,
@@ -40,18 +38,12 @@ function base64UrlEncode(buffer) {
     return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 }
 
-/**
- * Generate cryptographic state parameter
- */
 function generateState() {
     const array = new Uint8Array(32);
     crypto.getRandomValues(array);
     return base64UrlEncode(array);
 }
 
-/**
- * Start OAuth 2.1 authorization flow with PKCE
- */
 export async function startAuthorizationFlow() {
     const { codeVerifier, codeChallenge } = await generatePKCE();
     const state = generateState();

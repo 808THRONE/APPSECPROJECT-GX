@@ -149,11 +149,9 @@ export class LoginComponent extends LitElement {
         try {
             // Generate device fingerprint
             const fingerprint = await generateDeviceFingerprint();
-            console.log('Device fingerprint:', fingerprint.hash);
-
+            //console.log('Device fingerprint:', fingerprint.hash);
             // Store fingerprint in sessionStorage for later use
             sessionStorage.setItem('device_fingerprint', fingerprint.hash);
-
             // Start OAuth 2.1 flow with PKCE
             await startAuthorizationFlow();
         } catch (err) {

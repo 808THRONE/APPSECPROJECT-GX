@@ -1,29 +1,45 @@
 version: '3.8'
 
 services:
+
   # PostgreSQL 16.1
-  postgres:
-    image: postgres:16.1
-    container_name: securegate-postgres
+
+  wildfly:
+    image: quay.io/wildfly/wildfly:latest
+    container_name: wildflyiam
+    depends_on:
+      - postgres
     environment:
-      POSTGRES_DB: securegate
-      POSTGRES_USER: securegate
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_HOST: iam-postgres
+      DB_PORT: 5432
+      DB_NAME: iamdb
+      DB_USER: iamuser
+      DB_PASSWORD: iampassword
     volumes:
-      - postgres-data:/var/lib/postgresql/data
-      - ./postgres-init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./deployments:/opt/jboss/wildfly/standalone/deployments
     ports:
-      - "5432:5432"
+      - "9990:9990"
+      - "8081:8080"
     networks:
       - securegate-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.iam.rule=Host(`iam.localhost`)"
+      - "traefik.http.routers.iam.entrypoints=web"
+      - "traefik.http.services.iam.loadbalancer.server.port=8080"
 
-  # Redis 7.2 Cluster (3 masters + 3 replicas)
-  redis-master-1:
-    image: redis:7.2
-    container_name: securegate-redis-master-1
-    command: redis-server --port 6379 --cluster-enabled yes --cluster-config-file nodes.conf
+  postgres:
+    image: postgres:15
+    container_name: iam-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: iamuser
+      POSTGRES_PASSWORD: iampassword
+      POSTGRES_DB: iamdb
+    ports:
+      - "5432:5432"
     volumes:
-      - redis-master-1-data:/data
+      - postgres-data:/var/lib/postgresql/data
     networks:
       - securegate-network
 

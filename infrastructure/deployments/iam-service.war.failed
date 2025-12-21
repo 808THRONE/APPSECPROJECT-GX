@@ -1,0 +1,12 @@
+"{
+    \"WFLYCTL0412: Required services that are not installed:\" => [
+        \"org.wildfly.undertow.host.default-server.iam-host\",
+        \"jboss.naming.context.java.jboss.datasources.SecureGateDS\"
+    ],
+    \"WFLYCTL0180: Services with missing/unavailable dependencies\" => [
+        \"service org.wildfly.undertow.deployment.default-server.iam-host./ is missing [org.wildfly.undertow.host.default-server.iam-host]\",
+        \"service jboss.deployment.unit.\\\"iam-service.war\\\".undertow-deployment.UndertowDeploymentInfoService is missing [org.wildfly.undertow.host.default-server.iam-host]\",
+        \"service jboss.persistenceunit.\\\"iam-service.war#default\\\" is missing [jboss.naming.context.java.jboss.datasources.SecureGateDS]\",
+        \"service jboss.persistenceunit.\\\"iam-service.war#default\\\".__FIRST_PHASE__ is missing [jboss.naming.context.java.jboss.datasources.SecureGateDS]\"
+    ]
+}"

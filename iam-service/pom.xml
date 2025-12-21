@@ -41,12 +41,7 @@
         <!-- JAX-RS (REST Endpoints) - Provided by Jakarta EE API, but keeping if specific version needed or removing to avoid conflicts -->
         <!-- Removing specific JAX-RS and JSON-B as they are included in Jakarta EE API -->
 
-        <!-- PostgreSQL driver -->
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>42.7.2</version>
-        </dependency>
+
 
         <!-- BCrypt hashing -->
         <dependency>
@@ -128,7 +123,14 @@
                 <groupId>org.wildfly.plugins</groupId>
                 <artifactId>wildfly-maven-plugin</artifactId>
                 <version>5.0.0.Final</version>
+                <configuration>
+                    <hostname>localhost</hostname>
+                    <port>9990</port>
+                    <username>omar</username>
+                    <password>omar1@</password>
+                </configuration>
             </plugin>
         </plugins>
     </build>
+
 </project>

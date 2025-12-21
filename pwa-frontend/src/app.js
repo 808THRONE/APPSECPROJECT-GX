@@ -2,10 +2,8 @@ import { LitElement, html, css } from 'lit';
 import { useStore } from './store/store.js';
 import { handleOAuthCallback } from './utils/oauth-client.js';
 
-// Expose store globally for development/demo purposes
 window.useStore = useStore;
 
-// Import all components
 import './components/login-component.js';
 import './components/dashboard-component.js';
 import './components/policy-builder.js';
@@ -130,24 +128,16 @@ class SecureGateApp extends LitElement {
 
   async connectedCallback() {
     super.connectedCallback();
-
-    // Handle OAuth callback
     if (window.location.search.includes('code=')) {
       await this._handleOAuthCallback();
     }
-
-    // Subscribe to store changes
     this._storeUnsubscribe = useStore.subscribe((state) => {
       this.currentView = state.currentView;
       this.isAuthenticated = state.isAuthenticated;
     });
-
-    // Initialize state from store
     const state = useStore.getState();
     this.currentView = state.currentView;
     this.isAuthenticated = state.isAuthenticated;
-
-    // If authenticated, show dashboard by default
     if (this.isAuthenticated && this.currentView === 'login') {
       useStore.getState().setCurrentView('dashboard');
     }

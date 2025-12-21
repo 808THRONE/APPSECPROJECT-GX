@@ -1,0 +1,13 @@
+version: '3.8'
+
+# Docker Compose override for existing containers
+# Since you're using standalone containers (postgres-iam, wildfly-iam),
+# this file is optional. You can remove it if not needed.
+
+# If you want to use docker-compose instead, uncomment and configure:
+# services:
+#   postgres:
+#     # Override postgres settings if needed
+#     container_name: postgres-iam
+#     ports:
+#       - "5432:5432"

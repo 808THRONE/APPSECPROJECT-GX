@@ -1,16 +1,18 @@
 package com.securegate.session;
 
-import redis.clients.jedis.JedisPooled;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class SessionManager {
 
-    private static final JedisPooled redis = new JedisPooled("localhost", 6379);
+    private static final Map<String, String> sessionStore = new ConcurrentHashMap<>();
 
     public static void saveSession(String sessionId, String userId) {
-        redis.setex("session:" + sessionId, 3600, userId);
+        sessionStore.put("session:" + sessionId, userId);
+        // Note: Expiry handling is omitted for simple in-memory version
     }
 
     public static String getUser(String sessionId) {
-        return redis.get("session:" + sessionId);
+        return sessionStore.get("session:" + sessionId);
     }
 }

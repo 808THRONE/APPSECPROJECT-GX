@@ -202,8 +202,13 @@ export class ProfileComponent extends LitElement {
 
     handleLogout() {
         useStore.getState().clearTokens();
+        sessionStorage.removeItem('pkce_verifier');
+        sessionStorage.removeItem('oauth_state');
+        sessionStorage.removeItem('device_fingerprint');
+        window.history.replaceState({}, document.title, '/');
         useStore.getState().setCurrentView('login');
     }
+
 
     render() {
         const initials = this.user.name
