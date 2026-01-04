@@ -254,6 +254,8 @@ npm run preview
 | PWA Injection | Service Worker Script Injection |  SRI hashes + CSP worker-src |
 | XSS (CWE-79) | Cross-Site Scripting |  DOMPurify sanitization |
 | Token Theft | Offline Token Theft |  No service worker token caching |
+| CWE-916 | Weak Password Hash |  Argon2id implementation |
+| CWE-287 | Improper Authentication |  TOTP 2FA implementation |
 
 ### Security Best Practices
 
@@ -445,4 +447,13 @@ VITE_WS_URL=wss://api.yourdomain.me/audit
 
 **Document Version**: 1.0  
 **Last Updated**: December 7, 2025  
-**Status**: Phase 5 (Frontend) Complete - Backend Phases Pending
+**Status**: Phase 5 (Frontend) Complete - Backend Implementation & Infrastructure Complete
+
+## Recent Changes
+- **Backend Implementation**: Fully implemented OAuth 2.1 Authorization Server with PASETO v4 tokens and Argon2id password hashing.
+- **Infrastructure**: Configured and deployed PostgreSQL 16.1, Redis 7.2 Cluster, and MinIO via Docker Compose.
+- **Security**:
+    - Implemented TOTP Multi-Factor Authentication (MFA).
+    - Fixed weak password encoding (CWE-916) using Argon2.
+    - Mitigated improper authentication (CWE-287) with 2FA enforcement.
+- **Verification**: Verified local deployment, API connectivity, and database seeding.

@@ -32,3 +32,4 @@ yarn-error.log*
 # Ignore PDF and TXT files
 *.pdf
 *.txt
+**/target/

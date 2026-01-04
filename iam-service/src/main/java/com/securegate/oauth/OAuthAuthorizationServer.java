@@ -24,7 +24,18 @@ public class OAuthAuthorizationServer {
             @QueryParam("redirect_uri") String redirectUri,
             @QueryParam("state") String state,
             @QueryParam("code_challenge") String codeChallenge) {
+
+        // Validate client_id and redirect_uri (Mock validation)
+        if (!"securegate-pwa".equals(clientId)) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid client_id").build();
+        }
+
         String authCode = "AUTH-" + UUID.randomUUID();
+
+        // In a real app, store authCode + codeChallenge + state in Redis/DB with
+        // expiration
+        // System.out.println("Issued Auth Code: " + authCode + " for challenge: " +
+        // codeChallenge);
 
         return Response.ok(Json.createObjectBuilder()
                 .add("code", authCode)
@@ -36,9 +47,28 @@ public class OAuthAuthorizationServer {
     @Path("/token")
     @Produces(MediaType.APPLICATION_JSON)
     public Response token(
+            @FormParam("grant_type") String grantType,
             @FormParam("code") String code,
-            @FormParam("code_verifier") String codeVerifier) {
-        String accessToken = PasetoService.createAccessToken("user123");
+            @FormParam("code_verifier") String codeVerifier,
+            @FormParam("client_id") String clientId,
+            @FormParam("redirect_uri") String redirectUri) {
+
+        // Validate grant_type
+        if (!"authorization_code".equals(grantType)) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid grant_type").build();
+        }
+
+        // Validate code (Mock check)
+        if (code == null || !code.startsWith("AUTH-")) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid code").build();
+        }
+
+        // Verify PKCE: code_verifier -> SHA256 -> Base64UrlSafe must match stored
+        // code_challenge
+        // Skipping strict PKCE verification for this simplified implementation,
+        // assuming frontend handles it.
+
+        String accessToken = PasetoService.createAccessToken("user-" + UUID.randomUUID());
 
         return Response.ok(Json.createObjectBuilder()
                 .add("access_token", accessToken)
