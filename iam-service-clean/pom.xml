@@ -45,6 +45,13 @@
             <version>9.37.3</version>
         </dependency>
 
+        <!-- Google Tink (required by Nimbus for EdDSA) -->
+        <dependency>
+            <groupId>com.google.crypto.tink</groupId>
+            <artifactId>tink</artifactId>
+            <version>1.11.0</version>
+        </dependency>
+
         <!-- PostgreSQL Driver -->
         <dependency>
             <groupId>org.postgresql</groupId>
