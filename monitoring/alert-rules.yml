@@ -1,0 +1,59 @@
+# Alert Rules for Prometheus
+# Security and performance alerts
+
+groups:
+  - name: security_alerts
+    interval: 1m
+    rules:
+      # Failed login attempts
+      - alert: HighFailedLoginRate
+        expr: rate(failed_logins_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High rate of failed login attempts"
+          description: "{{ $value }} failed logins in 5 minutes"
+
+      # Token replay detection
+      - alert: TokenReplayDetected
+        expr: token_replay_attempts_total > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Token replay attack detected"
+          description: "JTI replay attempt detected"
+
+      # TLS downgrade attempt
+      - alert: TLSDowngradeAttempt
+        expr: tls_downgrade_attempts_total > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "TLS downgrade attempt detected"
+          description: "TLS 1.2 connection attempt blocked"
+
+  - name: performance_alerts
+    interval: 1m
+    rules:
+      # High API latency
+      - alert: HighAPILatency
+        expr: http_request_duration_seconds{quantile="0.99"} > 0.2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High API latency detected"
+          description: "p99 latency is {{ $value }}s"
+
+      # High database connections
+      - alert: HighDatabaseConnections
+        expr: pg_stat_database_numbackends > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High number of database connections"
+          description: "{{ $value }} active connections"

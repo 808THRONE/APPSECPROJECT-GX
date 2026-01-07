@@ -1,0 +1,9 @@
+embed-server --std-out=echo --server-config=standalone.xml
+
+module add --name=org.postgres --resources=/tmp/postgresql-42.6.0.jar --dependencies=javax.api,javax.transaction.api
+
+/subsystem=datasources/jdbc-driver=postgres:add(driver-name="postgres",driver-module-name="org.postgres",driver-class-name=org.postgresql.Driver)
+
+data-source add --name=PostgresDS --jndi-name=java:jboss/datasources/PostgresDS --driver-name=postgres --connection-url=jdbc:postgresql://${env.POSTGRES_HOST:postgres}:${env.POSTGRES_PORT:5432}/${env.POSTGRES_DB:securegate} --user-name=${env.POSTGRES_USER:securegate} --password=${env.POSTGRES_PASSWORD:SecurePassword123!} --validate-on-match=true --background-validation=false --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter
+
+stop-embedded-server

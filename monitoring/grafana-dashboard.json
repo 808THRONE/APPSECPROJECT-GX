@@ -1,0 +1,43 @@
+{
+    "dashboard": {
+        "title": "SecureGate IAM Portal - Security Dashboard",
+        "panels": [
+            {
+                "title": "Authentication Events",
+                "type": "graph",
+                "targets": [
+                    {
+                        "expr": "rate(auth_attempts_total[5m])"
+                    }
+                ]
+            },
+            {
+                "title": "Failed Logins",
+                "type": "graph",
+                "targets": [
+                    {
+                        "expr": "rate(failed_logins_total[5m])"
+                    }
+                ]
+            },
+            {
+                "title": "ABAC Policy Evaluations",
+                "type": "graph",
+                "targets": [
+                    {
+                        "expr": "rate(abac_evaluations_total[5m])"
+                    }
+                ]
+            },
+            {
+                "title": "Token Issuance Rate",
+                "type": "graph",
+                "targets": [
+                    {
+                        "expr": "rate(tokens_issued_total[5m])"
+                    }
+                ]
+            }
+        ]
+    }
+}
