@@ -1,11 +1,24 @@
 package com.securegate.entities;
 
+import jakarta.persistence.*;
 import java.util.Set;
 
+@Entity
+@Table(name = "tenants")
 public class Tenant {
+    @Id
+    @Column(name = "client_id")
     private String clientId;
+
+    @Column(name = "client_secret")
     private String clientSecret;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "tenant_redirect_uris", joinColumns = @JoinColumn(name = "tenant_id"))
+    @Column(name = "uri")
     private Set<String> redirectUris;
+
+    @Column(name = "name")
     private String name;
 
     public Tenant() {

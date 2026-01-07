@@ -1,11 +1,24 @@
 package com.securegate.entities;
 
+import jakarta.persistence.*;
 import java.util.Set;
 
+@Entity
+@Table(name = "identities")
 public class Identity {
+    @Id
+    @Column(name = "id")
     private String id;
+
+    @Column(name = "username", unique = true, nullable = false)
     private String username;
+
+    @Column(name = "password_hash")
     private String passwordHash;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "identity_roles", joinColumns = @JoinColumn(name = "identity_id"))
+    @Column(name = "role")
     private Set<String> roles;
 
     public Identity() {

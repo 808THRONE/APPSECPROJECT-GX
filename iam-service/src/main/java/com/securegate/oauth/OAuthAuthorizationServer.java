@@ -7,6 +7,8 @@ import com.securegate.repositories.GrantRepository;
 import com.securegate.repositories.IdentityRepository;
 import com.securegate.repositories.TenantRepository;
 import com.securegate.tokens.PasetoService;
+import com.securegate.auth.SessionService;
+import jakarta.ws.rs.CookieParam;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
@@ -41,9 +43,11 @@ public class OAuthAuthorizationServer {
     @Inject
     private IdentityRepository identityRepository;
 
+    @Inject
+    private SessionService sessionService;
+
     @GET
     @Path("/authorize")
-    @Produces(MediaType.APPLICATION_JSON)
     public Response authorize(
             @QueryParam("client_id") String clientId,
             @QueryParam("redirect_uri") String redirectUri,
@@ -51,7 +55,8 @@ public class OAuthAuthorizationServer {
             @QueryParam("response_type") String responseType,
             @QueryParam("scope") String scope,
             @QueryParam("code_challenge") String codeChallenge,
-            @QueryParam("code_challenge_method") String codeChallengeMethod) {
+            @QueryParam("code_challenge_method") String codeChallengeMethod,
+            @CookieParam("SESSION_ID") String sessionId) {
 
         // 1. Validate Client
         if (clientId == null || !tenantRepository.findByClientId(clientId).isPresent()) {
@@ -63,9 +68,26 @@ public class OAuthAuthorizationServer {
             return errorResponse("invalid_request", "Invalid redirect_uri");
         }
 
-        // 3. Authenticate User (Mock: Assume 'admin' is logged in or approved)
-        // We will assume implicit approval for the 'admin' user for this demo.
-        Identity user = identityRepository.findByUsername("admin").orElseThrow();
+        // 3. Authenticate User via Session
+        String username = null;
+        if (sessionId != null) {
+            username = sessionService.getUsername(sessionId).orElse(null);
+        }
+
+        if (username == null) {
+            // User is not authenticated.
+            // In a full OAuth server, we would redirect to a login page hosted by IAM.
+            // For this PWA/SPA hybrid, we can redirect back to the frontend login page with
+            // error,
+            // OR return 401. Redirecting is safer for the flow.
+            // Assuming frontend runs on localhost:5173 for now or we use a configured login
+            // URL.
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(Json.createObjectBuilder().add("error", "login_required").build())
+                    .build();
+        }
+
+        Identity user = identityRepository.findByUsername(username).orElseThrow();
 
         // 4. Create Authorization Code
         String code = UUID.randomUUID().toString();
@@ -159,10 +181,8 @@ public class OAuthAuthorizationServer {
             }
         }
 
-        // 6. Issue Access Token
         String accessToken = PasetoService.createAccessToken(grant.getIdentityId(), "admin", "openid");
 
-        // 7. Issue Mock ID Token (JWT format) so frontend can parse it
         String idToken = generateMockIdToken("admin", "admin@securegate.com");
 
         return Response.ok(Json.createObjectBuilder()

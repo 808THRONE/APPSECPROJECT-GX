@@ -2,19 +2,30 @@ package com.securegate.repositories;
 
 import com.securegate.entities.Grant;
 import jakarta.enterprise.context.ApplicationScoped;
-import java.util.Map;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.transaction.Transactional;
+
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 @ApplicationScoped
 public class GrantRepository {
-    private final Map<String, Grant> codeStore = new ConcurrentHashMap<>();
 
+    @PersistenceContext(unitName = "iamPU")
+    private EntityManager em;
+
+    @Transactional
     public void save(Grant grant) {
-        codeStore.put(grant.getCode(), grant);
+        em.persist(grant);
     }
 
+    @Transactional
     public Optional<Grant> consume(String code) {
-        return Optional.ofNullable(codeStore.remove(code));
+        Grant grant = em.find(Grant.class, code);
+        if (grant != null) {
+            em.remove(grant);
+            return Optional.of(grant);
+        }
+        return Optional.empty();
     }
 }

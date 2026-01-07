@@ -1,15 +1,34 @@
 package com.securegate.entities;
 
+import jakarta.persistence.*;
 import java.time.Instant;
 
+@Entity
+@Table(name = "grants")
 public class Grant {
+    @Id
+    @Column(name = "code")
     private String code;
+
+    @Column(name = "identity_id")
     private String identityId;
+
+    @Column(name = "client_id")
     private String clientId;
+
+    @Column(name = "expires_at")
     private Instant expiresAt;
+
+    @Column(name = "redirect_uri")
     private String redirectUri;
+
+    @Column(name = "nonce")
     private String nonce;
+
+    @Column(name = "code_challenge")
     private String codeChallenge;
+
+    @Column(name = "code_challenge_method")
     private String codeChallengeMethod;
 
     public Grant() {

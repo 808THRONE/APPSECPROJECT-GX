@@ -2,38 +2,33 @@ package com.securegate.repositories;
 
 import com.securegate.entities.Identity;
 import jakarta.enterprise.context.ApplicationScoped;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.transaction.Transactional;
+
 import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 @ApplicationScoped
 public class IdentityRepository {
-    private final Map<String, Identity> store = new ConcurrentHashMap<>();
 
-    public IdentityRepository() {
-        // Mock Data
-        Set<String> roles = new HashSet<>();
-        roles.add("admin");
-        roles.add("user");
-        Identity admin = new Identity("1", "admin", "password", roles); // In real app, hash password
-        store.put(admin.getUsername(), admin);
-
-        Set<String> userRoles = new HashSet<>();
-        userRoles.add("user");
-        Identity user = new Identity("2", "user", "password", userRoles);
-        store.put(user.getUsername(), user);
-    }
+    @PersistenceContext(unitName = "iamPU")
+    private EntityManager em;
 
     public Optional<Identity> findByUsername(String username) {
-        return Optional.ofNullable(store.get(username));
+        return em.createQuery("SELECT i FROM Identity i WHERE i.username = :username", Identity.class)
+                .setParameter("username", username)
+                .getResultStream()
+                .findFirst();
     }
 
     public boolean verifyCredentials(String username, String password) {
-        // Plain text comparison for mock purposes. In PROD use BCrypt.
-        Identity identity = store.get(username);
-        return identity != null && identity.getPasswordHash().equals(password);
+        // Plain text comparison for mock purposes.
+        Optional<Identity> identity = findByUsername(username);
+        return identity.isPresent() && identity.get().getPasswordHash().equals(password);
+    }
+
+    @Transactional
+    public void save(Identity identity) {
+        em.persist(identity);
     }
 }

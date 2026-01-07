@@ -31,6 +31,13 @@
             <scope>provided</scope>
         </dependency>
 
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>2.2.224</version>
+            <scope>test</scope>
+        </dependency>
+
         <!-- Nimbus JOSE + JWT -->
         <dependency>
             <groupId>com.nimbusds</groupId>

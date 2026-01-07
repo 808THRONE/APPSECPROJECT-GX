@@ -5,10 +5,12 @@ import { handleOAuthCallback } from './utils/oauth-client.js';
 window.useStore = useStore;
 
 import './components/login-component.js';
+import './components/signup-component.js';
 import './components/dashboard-component.js';
 import './components/policy-builder.js';
 import './components/audit-viewer.js';
 import './components/profile-component.js';
+
 
 class SecureGateApp extends LitElement {
   static properties = {
@@ -124,6 +126,11 @@ class SecureGateApp extends LitElement {
     this.isAuthenticated = false;
     this.loading = true;
     this._storeUnsubscribe = null;
+    this.addEventListener('navigate', this.handleNavigationEvent);
+  }
+
+  handleNavigationEvent(e) {
+    this.currentView = e.detail.view;
   }
 
   async connectedCallback() {
@@ -132,14 +139,31 @@ class SecureGateApp extends LitElement {
       await this._handleOAuthCallback();
     }
     this._storeUnsubscribe = useStore.subscribe((state) => {
-      this.currentView = state.currentView;
-      this.isAuthenticated = state.isAuthenticated;
+      // Sync auth state
+      if (this.isAuthenticated !== state.isAuthenticated) {
+        this.isAuthenticated = state.isAuthenticated;
+        if (this.isAuthenticated && (this.currentView === 'login' || this.currentView === 'signup')) {
+          this.currentView = 'dashboard';
+        }
+      }
+
+      // If store changes view (e.g. logout), we respect it, but we manage login/signup locally mostly
+      if (state.currentView !== this.currentView && state.currentView !== 'login') {
+        this.currentView = state.currentView;
+      }
     });
+
     const state = useStore.getState();
-    this.currentView = state.currentView;
     this.isAuthenticated = state.isAuthenticated;
-    if (this.isAuthenticated && this.currentView === 'login') {
-      useStore.getState().setCurrentView('dashboard');
+
+    if (this.isAuthenticated) {
+      if (this.currentView === 'login' || this.currentView === 'signup') {
+        this.currentView = 'dashboard';
+      }
+    } else {
+      if (this.currentView !== 'signup') {
+        this.currentView = 'login';
+      }
     }
 
     this.loading = false;
@@ -157,6 +181,7 @@ class SecureGateApp extends LitElement {
     if (this._storeUnsubscribe) {
       this._storeUnsubscribe();
     }
+    this.removeEventListener('navigate', this.handleNavigationEvent);
   }
 
   async _handleOAuthCallback() {
@@ -164,7 +189,6 @@ class SecureGateApp extends LitElement {
       const tokens = await handleOAuthCallback();
       useStore.getState().setTokens(tokens.accessToken, tokens.refreshToken);
 
-      // Parse user info from ID token (in real app, validate first!)
       const idTokenPayload = JSON.parse(atob(tokens.idToken.split('.')[1]));
       useStore.getState().setUser({
         name: idTokenPayload.name || 'User',
@@ -184,6 +208,7 @@ class SecureGateApp extends LitElement {
 
   handleNavigate(view) {
     useStore.getState().setCurrentView(view);
+    this.currentView = view;
   }
 
   renderContent() {
@@ -197,6 +222,9 @@ class SecureGateApp extends LitElement {
     }
 
     if (!this.isAuthenticated) {
+      if (this.currentView === 'signup') {
+        return html`<signup-component></signup-component>`;
+      }
       return html`<login-component></login-component>`;
     }
 
@@ -271,7 +299,6 @@ class SecureGateApp extends LitElement {
 }
 
 customElements.define('securegate-app', SecureGateApp);
-
 // Mount the app
 document.addEventListener('DOMContentLoaded', () => {
   const appRoot = document.getElementById('app');

@@ -6,12 +6,14 @@ import './common/button.js';
 import './common/card.js';
 
 export class LoginComponent extends LitElement {
-    static properties = {
-        loading: { type: Boolean },
-        error: { type: String },
-    };
+  static properties = {
+    loading: { type: Boolean },
+    error: { type: String },
+    username: { type: String },
+    password: { type: String },
+  };
 
-    static styles = css`
+  static styles = css`
     :host {
       display: block;
       min-height: 100vh;
@@ -103,6 +105,7 @@ export class LoginComponent extends LitElement {
       justify-content: center;
       flex-shrink: 0;
       font-size: 14px;
+      color: white;
     }
 
     .error {
@@ -114,6 +117,34 @@ export class LoginComponent extends LitElement {
       border: 1px solid var(--color-error);
     }
 
+    .input-group {
+      margin-bottom: var(--space-lg);
+    }
+
+    label {
+      display: block;
+      margin-bottom: var(--space-xs);
+      color: var(--color-text-secondary);
+      font-size: var(--font-size-sm);
+    }
+
+    input {
+      width: 100%;
+      padding: var(--space-md);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      color: var(--color-text-primary);
+      font-size: var(--font-size-base);
+      transition: all var(--transition-fast);
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      background: rgba(255, 255, 255, 0.1);
+    }
+
     .security-note {
       margin-top: var(--space-xl);
       padding: var(--space-md);
@@ -122,6 +153,23 @@ export class LoginComponent extends LitElement {
       border: 1px solid rgba(59, 130, 246, 0.3);
       font-size: var(--font-size-sm);
       color: var(--color-text-tertiary);
+    }
+    
+    .link-text {
+        text-align: center;
+        margin-top: var(--space-md);
+        color: var(--color-text-secondary);
+        font-size: var(--font-size-sm);
+    }
+    
+    .link-text a {
+        color: var(--color-primary);
+        text-decoration: none;
+        cursor: pointer;
+    }
+    
+    .link-text a:hover {
+        text-decoration: underline;
     }
 
     @keyframes fadeInUp {
@@ -136,32 +184,64 @@ export class LoginComponent extends LitElement {
     }
   `;
 
-    constructor() {
-        super();
-        this.loading = false;
-        this.error = '';
+  constructor() {
+    super();
+    this.loading = false;
+    this.error = '';
+    this.username = '';
+    this.password = '';
+  }
+
+  handleInput(e) {
+    const { name, value } = e.target;
+    this[name] = value;
+  }
+
+  async handleLogin(e) {
+    if (e) e.preventDefault();
+    this.loading = true;
+    this.error = '';
+
+    try {
+      const fingerprint = await generateDeviceFingerprint();
+      sessionStorage.setItem('device_fingerprint', fingerprint.hash);
+
+      const loginResponse = await fetch('/rest-iam/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          username: this.username,
+          password: this.password
+        })
+      });
+
+      if (!loginResponse.ok) {
+        const errorData = await loginResponse.json();
+        throw new Error(errorData.error_description || 'Authentication failed');
+      }
+
+      // Proceed to OAuth flow
+      await startAuthorizationFlow();
+    } catch (err) {
+      this.error = err.message || 'Failed to initiate login';
+      this.loading = false;
     }
+  }
 
-    async handleLogin() {
-        this.loading = true;
-        this.error = '';
+  navigateToSignup(e) {
+    e.preventDefault();
+    // Dispatch event for app shell to handle navigation
+    this.dispatchEvent(new CustomEvent('navigate', {
+      detail: { view: 'signup' },
+      bubbles: true,
+      composed: true
+    }));
+  }
 
-        try {
-            // Generate device fingerprint
-            const fingerprint = await generateDeviceFingerprint();
-            //console.log('Device fingerprint:', fingerprint.hash);
-            // Store fingerprint in sessionStorage for later use
-            sessionStorage.setItem('device_fingerprint', fingerprint.hash);
-            // Start OAuth 2.1 flow with PKCE
-            await startAuthorizationFlow();
-        } catch (err) {
-            this.error = err.message || 'Failed to initiate login';
-            this.loading = false;
-        }
-    }
-
-    render() {
-        return html`
+  render() {
+    return html`
       <div class="login-container">
         <div class="logo">
           <div class="logo-icon">🔐</div>
@@ -172,50 +252,62 @@ export class LoginComponent extends LitElement {
         <sg-card glass>
           <div class="card-content">
             <h1>Welcome Back</h1>
-            <p>Enterprise Identity & Access Management with Zero Trust Architecture</p>
+            <p>Enterprise Identity & Access Management</p>
 
             ${this.error ? html`
               <div class="error">${this.error}</div>
             ` : ''}
 
-            <ul class="features">
-              <li>
-                <div class="feature-icon">✓</div>
-                <span>OAuth 2.1 with PKCE Security</span>
-              </li>
-              <li>
-                <div class="feature-icon">✓</div>
-                <span>Multi-Factor Authentication</span>
-              </li>
-              <li>
-                <div class="feature-icon">✓</div>
-                <span>Zero Trust Verification</span>
-              </li>
-              <li>
-                <div class="feature-icon">✓</div>
-                <span>End-to-End Encryption</span>
-              </li>
-            </ul>
+            <form @submit="${this.handleLogin}">
+                <div class="input-group">
+                    <label for="username">Username</label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        name="username" 
+                        .value="${this.username}"
+                        @input="${this.handleInput}"
+                        required
+                        placeholder="Enter your username"
+                    >
+                </div>
 
-            <sg-button
-              variant="primary"
-              size="lg"
-              fullWidth
-              ?loading="${this.loading}"
-              @sg-click="${this.handleLogin}"
-            >
-              ${this.loading ? 'Connecting...' : 'Secure Login'}
-            </sg-button>
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        .value="${this.password}"
+                        @input="${this.handleInput}"
+                        required
+                        placeholder="Enter your password"
+                    >
+                </div>
+
+                <sg-button
+                  variant="primary"
+                  size="lg"
+                  fullWidth
+                  ?loading="${this.loading}"
+                  type="submit"
+                >
+                  ${this.loading ? 'Connecting...' : 'Secure Login'}
+                </sg-button>
+            </form>
+
+            <div class="link-text">
+                Don't have an account? <a @click="${this.navigateToSignup}">Sign up here</a>
+            </div>
 
             <div class="security-note">
               🔒 Your device fingerprint will be collected for security purposes.
-              This helps us protect your account from unauthorized access.
             </div>
           </div>
         </sg-card>
       </div>
     `;
-    }
+  }
 }
 
 customElements.define('login-component', LoginComponent);

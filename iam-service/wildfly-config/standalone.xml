@@ -11,3 +11,15 @@
 -->
 
 <!-- This is a placeholder - actual standalone.xml will be configured during Phase 2 -->
+<datasource jndi-name="java:/jdbc/IAMDS"
+            pool-name="IAMDS"
+            enabled="true">
+    <connection-url>
+        jdbc:h2:file:./iam-db;DB_CLOSE_DELAY=-1;AUTO_SERVER=TRUE
+    </connection-url>
+    <driver>h2</driver>
+    <security>
+        <user-name>sa</user-name>
+        <password>sa</password>
+    </security>
+</datasource>

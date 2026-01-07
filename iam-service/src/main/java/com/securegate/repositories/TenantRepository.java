@@ -2,33 +2,31 @@ package com.securegate.repositories;
 
 import com.securegate.entities.Tenant;
 import jakarta.enterprise.context.ApplicationScoped;
-import java.util.HashSet;
-import java.util.Map;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.transaction.Transactional;
+
 import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 @ApplicationScoped
 public class TenantRepository {
-    private final Map<String, Tenant> store = new ConcurrentHashMap<>();
 
-    public TenantRepository() {
-        // Mock Data
-        Set<String> redirectUris = new HashSet<>();
-        redirectUris.add("https://oauth.pstmn.io/v1/callback");
-        redirectUris.add("http://localhost:5173/callback");
+    @PersistenceContext(unitName = "iamPU")
+    private EntityManager em;
 
-        Tenant tenant = new Tenant("client-id-123", "client-secret-456", redirectUris, "Demo App");
-        store.put(tenant.getClientId(), tenant);
-        store.put("securegate-pwa", new Tenant("securegate-pwa", "pwa-secret", redirectUris, "SecureGate PWA"));
-    }
+    // No constructor initialization - data should come from DB
 
     public Optional<Tenant> findByClientId(String clientId) {
-        return Optional.ofNullable(store.get(clientId));
+        return Optional.ofNullable(em.find(Tenant.class, clientId));
     }
 
     public boolean validateRedirectUri(String clientId, String redirectUri) {
-        Tenant tenant = store.get(clientId);
+        Tenant tenant = em.find(Tenant.class, clientId);
         return tenant != null && tenant.getRedirectUris().contains(redirectUri);
+    }
+
+    @Transactional
+    public void save(Tenant tenant) {
+        em.persist(tenant);
     }
 }
