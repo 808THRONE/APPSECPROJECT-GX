@@ -1,0 +1,36 @@
+# SecureGate Implementation Problem Report
+**Date:** 2026-01-10
+**Status:** Verification Halted
+
+## Critical Integration Issues
+
+### 1. Port Configuration Mismatch
+- **Issue:** The Frontend (running on Nginx port 80) attempts to initiate SSO by redirecting to `http://localhost:8081/iam-service/api/...` (Direct Container Port) instead of `http://localhost/iam-service/api/...` (Nginx Proxy).
+- **Impact:** This bypasses the API Gateway/Proxy configuration and can cause CORS issues or connection refusals if the backend ports are not exposed or blocked by firewalls in a real verification environment.
+- **Root Cause:** [config.ts](file:///c:/Users/808th/OneDrive/Desktop/A%20try/pwa-frontend/src/config.ts) or the backend [OAuth2Resource](file:///c:/Users/808th/OneDrive/Desktop/A%20try/iam-service/src/main/java/com/securegate/iam/oauth/OAuth2Resource.java#15-258) might be constructing absolute URLs using the internall/bound port instead of the public proxy URL.
+
+### 2. URL Path Duplication (Double-Pathing)
+- **Issue:** During the Registration flow, the IAM Service constructs a redirect URL with a duplicated path segment: `/iam-service/api/iam-service/api/oauth2/authorize`.
+- **Impact:** Results in a 404 Not Found error, breaking the user registration -> auto-login transition.
+- **Root Cause:** Likely in [OAuth2Resource.java](file:///c:/Users/808th/OneDrive/Desktop/A%20try/iam-service/src/main/java/com/securegate/iam/oauth/OAuth2Resource.java), the `UriBuilder` is appending to an existing path (e.g., from `UriInfo`) rather than replacing it, or the `redirectUri` parameter is being malformed.
+
+### 3. Frontend Token Exchange Failure
+- **Issue:** After manually fixing the URL to get an Authorization Code, the Frontend fails to exchange it for an Access Token (`Login failed` error).
+- **Impact:** Users remain unauthenticated even after successful correct credentials.
+- **Root Cause:** 
+    - The `redirect_uri` sent during the token exchange request likely matches `localhost` (port 80) but the backend might expect `localhost:8080` or `localhost:8081`.
+    - [authService.ts](file:///c:/Users/808th/OneDrive/Desktop/A%20try/pwa-frontend/src/services/authService.ts) might be attempting to call the token endpoint on the wrong port/path.
+
+### 4. Stego Module Inaccessibility
+- **Requirement:** The "Stego" page requires a valid generic or authenticated session.
+- **Current State:** Due to the broken Auth flow, the Stego page cannot be properly accessed or verified from the UI context.
+
+## Actions Taken Before Shutdown
+- **Nginx Config:** Updated to include `location /iam-service` and `location /api-gateway` to allow unified access via Port 80.
+- **Frontend Config:** Updated [config.ts](file:///c:/Users/808th/OneDrive/Desktop/A%20try/pwa-frontend/src/config.ts) to point to `http://localhost/...` (port 80) for APIs.
+- **IAM Service:** [OAuth2Resource.java](file:///c:/Users/808th/OneDrive/Desktop/A%20try/iam-service/src/main/java/com/securegate/iam/oauth/OAuth2Resource.java) was modified to include a UI, but the redirect logic needs debugging.
+
+## Next Steps for Remediation
+1.  **Standardize URLs:** Hardcode strict public URLs in [ApiGatewayConfig](file:///c:/Users/808th/OneDrive/Desktop/A%20try/api-gateway/src/main/java/com/securegate/api/config/ApiGatewayConfig.java#10-91) and [OAuth2Resource](file:///c:/Users/808th/OneDrive/Desktop/A%20try/iam-service/src/main/java/com/securegate/iam/oauth/OAuth2Resource.java#15-258) to avoid inferring them from internal request contexts which often carry the wrong port (8080/8081 vs 80).
+2.  **Fix Redirect Logic:** Audit `UriBuilder` usage in `OAuth2Resource.register` method.
+3.  **Debug Token Exchange:** Inspet the `POST /token` request in the browser network tab to see the exact error response (likely `invalid_grant` due to Mismatched Redirect URI).

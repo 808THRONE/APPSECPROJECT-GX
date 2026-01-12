@@ -1,0 +1,30 @@
+# Large binaries and archives
+*.zip
+*.tar.gz
+*.jar
+wildfly-38.0.0.Final/
+wildfly.zip
+
+# Logs
+*.log
+*_log.txt
+server_tail.txt
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.iml
+
+# Node / Frontend
+node_modules/
+dist/
+build/
+.env
+
+# Java / Maven
+target/
+*.class

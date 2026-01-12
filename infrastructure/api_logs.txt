@@ -1,0 +1,50 @@
+﻿[0m[0m17:06:34,761 INFO  [org.jboss.as] (MSC service thread 1-2) WFLYSRV0049: WildFly 38.0.0.Final (WildFly Core 30.0.0.Final) starting
+[0m[0m17:06:35,692 INFO  [org.wildfly.security] (Controller Boot Thread) ELY00001: WildFly Elytron version 2.7.0.Final
+[0m[0m17:06:36,251 INFO  [org.jboss.as.repository] (ServerService Thread Pool -- 19) WFLYDR0001: Content added at location /opt/jboss/wildfly/standalone/data/content/49/ad5a746cf7a44ed90ea24d4d0cbb89db96e831/content
+[0m[0m17:06:36,295 INFO  [org.jboss.as.server] (Controller Boot Thread) WFLYSRV0039: Creating http management service using socket-binding (management-http)
+[0m[0m17:06:36,314 INFO  [org.xnio] (MSC service thread 1-3) XNIO version 3.8.16.Final
+[0m[0m17:06:36,324 INFO  [org.xnio.nio] (MSC service thread 1-3) XNIO NIO Implementation Version 3.8.16.Final
+[0m[0m17:06:36,356 INFO  [org.wildfly.extension.elytron.oidc._private] (ServerService Thread Pool -- 54) WFLYOIDC0001: Activating WildFly Elytron OIDC Subsystem
+[0m[0m17:06:36,363 INFO  [org.jboss.as.jaxrs] (ServerService Thread Pool -- 58) WFLYRS0016: RESTEasy version 6.2.14.Final
+[0m[0m17:06:36,370 INFO  [org.wildfly.extension.health] (ServerService Thread Pool -- 55) WFLYHEALTH0001: Activating Base Health Subsystem
+[0m[0m17:06:36,372 INFO  [org.wildfly.extension.io] (ServerService Thread Pool -- 57) WFLYIO001: Worker 'default' has auto-configured to 40 IO threads with 320 max task threads based on your 20 available processors
+[0m[33m17:06:36,373 WARN  [org.jboss.as.txn] (ServerService Thread Pool -- 75) WFLYTX0013: The node-identifier attribute on the /subsystem=transactions is set to the default value. This is a danger for environments running multiple servers. Please make sure the attribute value is unique.
+[0m[0m17:06:36,374 INFO  [org.wildfly.extension.microprofile.jwt.smallrye] (ServerService Thread Pool -- 67) WFLYJWT0001: Activating MicroProfile JWT Subsystem
+[0m[0m17:06:36,377 INFO  [org.jboss.as.clustering.infinispan] (ServerService Thread Pool -- 56) WFLYCLINF0001: Activating Infinispan subsystem.
+[0m[0m17:06:36,380 INFO  [org.wildfly.extension.microprofile.config.smallrye] (ServerService Thread Pool -- 66) WFLYCONF0001: Activating MicroProfile Config Subsystem
+[0m[0m17:06:36,383 INFO  [org.jboss.as.jsf] (ServerService Thread Pool -- 63) WFLYJSF0007: Activated the following Jakarta Server Faces Implementations: [main]
+[0m[0m17:06:36,383 INFO  [org.jboss.as.naming] (ServerService Thread Pool -- 68) WFLYNAM0001: Activating Naming Subsystem
+[0m[0m17:06:36,384 INFO  [org.jboss.as.webservices] (ServerService Thread Pool -- 77) WFLYWS0002: Activating WebServices Extension
+[0m[0m17:06:36,389 INFO  [org.jboss.as.connector] (MSC service thread 1-3) WFLYJCA0009: Starting Jakarta Connectors Subsystem (WildFly/IronJacamar 3.0.14.Final)
+[0m[0m17:06:36,410 INFO  [org.wildfly.extension.metrics] (ServerService Thread Pool -- 65) WFLYMETRICS0001: Activating Base Metrics Subsystem
+[0m[0m17:06:36,426 INFO  [org.jboss.as.server.deployment] (MSC service thread 1-2) WFLYSRV0027: Starting deployment of "api-gateway.war" (runtime-name: "api-gateway.war")
+[0m[0m17:06:36,438 INFO  [org.jboss.remoting] (MSC service thread 1-9) JBoss Remoting version 5.0.31.Final
+[0m[0m17:06:36,452 INFO  [org.jboss.as.connector.subsystems.datasources] (ServerService Thread Pool -- 45) WFLYJCA0004: Deploying JDBC-compliant driver class org.h2.Driver (version 2.2)
+[0m[0m17:06:36,491 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-2) WFLYUT0003: Undertow 2.3.20.Final starting
+[0m[0m17:06:36,491 INFO  [org.jboss.as.connector.deployers.jdbc] (MSC service thread 1-9) WFLYJCA0018: Started Driver service with driver-name = h2
+[0m[0m17:06:36,506 INFO  [org.jboss.as.naming] (MSC service thread 1-9) WFLYNAM0003: Starting Naming Service
+[0m[0m17:06:36,506 INFO  [org.jboss.as.mail.extension] (MSC service thread 1-2) WFLYMAIL0001: Bound mail session [java:jboss/mail/Default]
+[0m[33m17:06:36,529 WARN  [org.wildfly.extension.elytron] (MSC service thread 1-9) WFLYELY00023: KeyStore file '/opt/jboss/wildfly/standalone/configuration/application.keystore' does not exist. Used blank.
+[0m[33m17:06:36,562 WARN  [org.wildfly.extension.elytron] (MSC service thread 1-9) WFLYELY01084: KeyStore /opt/jboss/wildfly/standalone/configuration/application.keystore not found, it will be auto-generated on first use with a self-signed certificate for host localhost
+[0m[0m17:06:36,566 INFO  [org.jboss.as.ejb3] (MSC service thread 1-8) WFLYEJB0481: Strict pool slsb-strict-max-pool is using a max instance size of 320 (per class), which is derived from thread worker pool sizing.
+[0m[0m17:06:36,566 INFO  [org.jboss.as.ejb3] (MSC service thread 1-3) WFLYEJB0482: Strict pool mdb-strict-max-pool is using a max instance size of 80 (per class), which is derived from the number of CPUs on this host.
+[0m[0m17:06:36,597 INFO  [org.wildfly.extension.undertow] (ServerService Thread Pool -- 76) WFLYUT0014: Creating file handler for path '/opt/jboss/wildfly/welcome-content' with options [directory-listing: 'false', follow-symlink: 'false', case-sensitive: 'true', safe-symlink-paths: '[]']
+[0m[0m17:06:36,610 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-9) WFLYUT0012: Started server default-server.
+[0m[0m17:06:36,613 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-8) Queuing requests.
+[0m[0m17:06:36,614 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-8) WFLYUT0018: Host default-host starting
+[0m[0m17:06:36,698 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-3) WFLYUT0006: Undertow HTTP listener default listening on 0.0.0.0:8080
+[0m[0m17:06:36,737 INFO  [org.jboss.as.ejb3] (MSC service thread 1-9) WFLYEJB0493: Jakarta Enterprise Beans subsystem suspension complete
+[0m[0m17:06:36,790 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-5) WFLYUT0006: Undertow HTTPS listener https listening on 0.0.0.0:8443
+[0m[0m17:06:36,800 INFO  [org.jboss.as.server.deployment.scanner] (MSC service thread 1-6) WFLYDS0013: Started FileSystemDeploymentService for directory /opt/jboss/wildfly/standalone/deployments
+[0m[0m17:06:36,815 INFO  [org.jboss.as.connector.subsystems.datasources] (MSC service thread 1-5) WFLYJCA0001: Bound data source [java:jboss/datasources/ExampleDS]
+[0m[0m17:06:36,858 INFO  [org.jboss.ws.common.management] (MSC service thread 1-8) JBWS022052: Starting JBossWS 7.3.5.Final (Apache CXF 4.0.9.jbossorg-1) 
+[0m[0m17:06:37,568 INFO  [org.jboss.weld.deployer] (MSC service thread 1-4) WFLYWELD0003: Processing weld deployment api-gateway.war
+[0m[0m17:06:37,829 INFO  [org.hibernate.validator.internal.util.Version] (MSC service thread 1-4) HV000001: Hibernate Validator 8.0.3.Final
+[0m[0m17:06:38,255 INFO  [org.jboss.weld.Version] (MSC service thread 1-4) WELD-000900: 5.1.6 (Final)
+[0m[0m17:06:39,903 INFO  [org.jboss.resteasy.resteasy_jaxrs.i18n] (ServerService Thread Pool -- 82) RESTEASY002225: Deploying jakarta.ws.rs.core.Application: class com.securegate.api.ApiApplication$Proxy$_$$_WeldClientProxy
+[0m[0m17:06:39,999 INFO  [org.wildfly.extension.undertow] (ServerService Thread Pool -- 82) WFLYUT0021: Registered web context: '/api-gateway' for server 'default-server'
+[0m[0m17:06:40,059 INFO  [org.jboss.as.server] (ServerService Thread Pool -- 46) WFLYSRV0010: Deployed "api-gateway.war" (runtime-name : "api-gateway.war")
+[0m[0m17:06:40,099 INFO  [org.jboss.as.server] (Controller Boot Thread) WFLYSRV0212: Resuming server
+[0m[0m17:06:40,105 INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0060: Http management interface listening on http://0.0.0.0:9990/management
+[0m[0m17:06:40,105 INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0051: Admin console listening on http://0.0.0.0:9990
+[0m[0m17:06:40,107 INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0025: WildFly 38.0.0.Final (WildFly Core 30.0.0.Final) started in 6474ms - Started 408 of 620 services (335 services are lazy, passive or on-demand) - Server configuration file in use: standalone.xml - Minimum feature stability level: community

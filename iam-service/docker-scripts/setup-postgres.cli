@@ -1,0 +1,3 @@
+embed-server --std-out=echo
+data-source add --name=SecureGateDS --jndi-name=java:jboss/datasources/SecureGateDS --driver-name=postgresql --driver-module-name=org.postgresql --driver-class=org.postgresql.Driver --connection-url=jdbc:postgresql://${env.DB_HOST:postgres}:${env.DB_PORT:5432}/${env.DB_NAME:securegate_iam} --user-name=${env.DB_USER:securegate} --password=${env.DB_PASS:securegate_password} --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker --exception-sorter-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter
+stop-embedded-server

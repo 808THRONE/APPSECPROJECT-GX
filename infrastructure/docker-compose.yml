@@ -1,0 +1,195 @@
+version: '3.8'
+
+services:
+  # Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: securegate-postgres
+    environment:
+      POSTGRES_USER: securegate
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-securegate_password}
+      POSTGRES_DB: securegate_iam
+    volumes:
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - securegate-net
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U securegate -d securegate_iam" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Cache / Session Store
+  redis:
+    image: redis:7-alpine
+    container_name: securegate-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_password}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - securegate-net
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_password}", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  # Object Storage (for large artifacts/logs)
+  minio:
+    image: minio/minio
+    container_name: securegate-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_USER:-minio_admin}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD:-minio_password}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    networks:
+      - securegate-net
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # Reverse Proxy / Ingress
+  nginx:
+    image: nginx:alpine
+    container_name: securegate-nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - iam-service
+      - api-gateway
+      - stego-module
+      - frontend
+    networks:
+      - securegate-net
+
+  # IAM Service (WildFly)
+  iam-service:
+    build:
+      context: ../iam-service
+      dockerfile: Dockerfile
+    container_name: securegate-iam
+    environment:
+      # Database Configuration
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: securegate
+      DB_PASS: ${DB_PASSWORD:-securegate_password}
+      DB_NAME: securegate_iam
+      # Redis Configuration
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_password}
+      # JWT Configuration (shared with API Gateway)
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-SecureGate_Production_Secret_Key_Must_Be_Changed_In_Prod_256bit!}
+      JWT_ISSUER: ${JWT_ISSUER:-https://iam.securegate.io}
+      JWT_EXPIRATION_SECONDS: ${JWT_EXPIRATION_SECONDS:-900}
+      # Public URL for OAuth redirects (through Nginx proxy)
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost}
+      # Stego Configuration
+      STEGO_SERVICE_URL: http://stego-module:8080/stego-module/api
+      STEGO_ENABLED: ${STEGO_ENABLED:-true}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - securegate-net
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/iam-service/api/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    ports:
+      - "8081:8080"
+
+  # API Gateway (WildFly)
+  api-gateway:
+    build:
+      context: ../api-gateway
+      dockerfile: Dockerfile
+    container_name: securegate-api
+    environment:
+      # Service URLs
+      IAM_SERVICE_URL: http://iam-service:8080/iam-service/api
+      STEGO_SERVICE_URL: http://stego-module:8080/stego-module/api
+      # JWT Configuration (must match IAM Service)
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-SecureGate_Production_Secret_Key_Must_Be_Changed_In_Prod_256bit!}
+      JWT_ISSUER: ${JWT_ISSUER:-https://iam.securegate.io}
+      JWT_AUDIENCE: securegate-api
+      # Stego Integration
+      STEGO_ENABLED: ${STEGO_ENABLED:-true}
+      STEGO_ENCRYPTION_KEY: ${STEGO_ENCRYPTION_KEY:-MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=}
+    depends_on:
+      - iam-service
+      - stego-module
+    networks:
+      - securegate-net
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/api-gateway/api/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    ports:
+      - "8080:8080"
+
+  # Steganography Service (WildFly)
+  stego-module:
+    build:
+      context: ../stego-module
+      dockerfile: Dockerfile
+    container_name: securegate-stego
+    environment:
+      # Encryption Configuration
+      STEGO_ENCRYPTION_KEY: ${STEGO_ENCRYPTION_KEY:-MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=}
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "8084:8080"
+    networks:
+      - securegate-net
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/stego-module/api/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # PWA Frontend
+  frontend:
+    build:
+      context: ../pwa-frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost/api-gateway/api/v1}
+        VITE_IAM_URL: ${VITE_IAM_URL:-http://localhost/iam-service/api}
+        VITE_STEGO_URL: ${VITE_STEGO_URL:-http://localhost/stego-module/api}
+        VITE_STEGO_ENABLED: ${VITE_STEGO_ENABLED:-true}
+        VITE_ENV: ${VITE_ENV:-production}
+    container_name: securegate-frontend
+    networks:
+      - securegate-net
+
+networks:
+  securegate-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
