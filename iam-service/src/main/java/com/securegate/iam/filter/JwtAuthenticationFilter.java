@@ -59,13 +59,12 @@ public class JwtAuthenticationFilter implements ContainerRequestFilter {
             "/oauth2/register",
             "/oauth2/login",
             "/health",
-            "/oauth2/keys"
-    );
+            "/oauth2/keys");
 
     @Override
     public void filter(ContainerRequestContext requestContext) {
         String path = requestContext.getUriInfo().getPath();
-        
+
         // Skip auth for public endpoints
         if (PUBLIC_PATHS.stream().anyMatch(path::startsWith)) {
             return;
@@ -83,7 +82,8 @@ public class JwtAuthenticationFilter implements ContainerRequestFilter {
                 LOGGER.info("Access token cookie found in request");
                 token = cookie.getValue();
             } else {
-                LOGGER.fine("No access token cookie found in request. Cookies present: " + requestContext.getCookies().keySet());
+                LOGGER.fine("No access token cookie found in request. Cookies present: "
+                        + requestContext.getCookies().keySet());
             }
         }
 
@@ -95,8 +95,8 @@ public class JwtAuthenticationFilter implements ContainerRequestFilter {
             SignedJWT signedJWT = SignedJWT.parse(token);
 
             // 1. Strict Algorithm Enforcement
-            if (!JWSAlgorithm.RS256.equals(signedJWT.getHeader().getAlgorithm())) {
-                abortWithUnauthorized(requestContext, "Invalid algorithm - only RS256 allowed");
+            if (!JWSAlgorithm.EdDSA.equals(signedJWT.getHeader().getAlgorithm())) {
+                abortWithUnauthorized(requestContext, "Invalid algorithm - only EdDSA allowed");
                 return;
             }
 
@@ -108,7 +108,16 @@ public class JwtAuthenticationFilter implements ContainerRequestFilter {
             }
 
             // 3. Signature Verification
-            JWSVerifier verifier = new com.nimbusds.jose.crypto.RSASSAVerifier(keyService.getPublicKey());
+            // Extract the raw 32-byte public key from X.509 encoding (last 32 bytes)
+            byte[] encoded = keyService.getPublicKey().getEncoded();
+            byte[] x = java.util.Arrays.copyOfRange(encoded, encoded.length - 32, encoded.length);
+
+            com.nimbusds.jose.jwk.OctetKeyPair okp = new com.nimbusds.jose.jwk.OctetKeyPair.Builder(
+                    com.nimbusds.jose.jwk.Curve.Ed25519,
+                    com.nimbusds.jose.util.Base64URL.encode(x))
+                    .build();
+
+            JWSVerifier verifier = new com.nimbusds.jose.crypto.Ed25519Verifier(okp);
             if (!signedJWT.verify(verifier)) {
                 abortWithUnauthorized(requestContext, "Invalid token signature");
                 return;

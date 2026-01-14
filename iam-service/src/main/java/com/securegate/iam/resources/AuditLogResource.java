@@ -6,6 +6,8 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.SecurityContext;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -15,11 +17,17 @@ import java.util.*;
 @Consumes(MediaType.APPLICATION_JSON)
 public class AuditLogResource {
 
+        @Context
+        private SecurityContext sc;
+
         @Inject
         private AuditLogRepository auditLogRepository;
 
         @GET
         public Response getLogs() {
+                if (!sc.isUserInRole("ADMIN")) {
+                        return Response.status(Response.Status.FORBIDDEN).build();
+                }
                 List<AuditLog> logs = auditLogRepository.findAll();
 
                 // If no logs in database, return production-like mock data
@@ -33,6 +41,9 @@ public class AuditLogResource {
         @GET
         @Path("/{id}")
         public Response getLogById(@PathParam("id") String id) {
+                if (!sc.isUserInRole("ADMIN")) {
+                        return Response.status(Response.Status.FORBIDDEN).build();
+                }
                 // Find specific log
                 return Response.ok(createMockLog("LOG_FOUND", Instant.now(), "admin", "view", "audit", id, "success",
                                 "Audit log retrieved")).build();
@@ -41,6 +52,9 @@ public class AuditLogResource {
         @GET
         @Path("/stats")
         public Response getStats() {
+                if (!sc.isUserInRole("ADMIN")) {
+                        return Response.status(Response.Status.FORBIDDEN).build();
+                }
                 Map<String, Object> stats = new HashMap<>();
                 stats.put("totalEvents", 2547);
                 stats.put("successCount", 2389);

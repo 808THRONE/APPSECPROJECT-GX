@@ -1,6 +1,7 @@
 package com.securegate.iam.oauth;
 
 import com.securegate.iam.model.User;
+import com.securegate.iam.model.Role;
 import com.securegate.iam.repository.UserRepository;
 import com.securegate.iam.service.CryptoService;
 import com.securegate.iam.service.TokenService;
@@ -9,8 +10,8 @@ import com.securegate.iam.service.TotpService;
 import com.securegate.iam.service.KeyManagementService;
 import com.securegate.iam.service.RevocationService;
 import com.securegate.iam.service.RefreshTokenService;
+import com.securegate.iam.service.SanitizationService;
 import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jwt.SignedJWT;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -28,6 +29,7 @@ public class OAuth2Resource {
     private static final Logger LOGGER = Logger.getLogger(OAuth2Resource.class.getName());
 
     private static final Map<String, AuthContext> codeStore = new ConcurrentHashMap<>();
+    private static final Map<String, String> mfaStore = new ConcurrentHashMap<>(); // sessionId -> userId
 
     @Inject
     private TokenService tokenService;
@@ -53,6 +55,9 @@ public class OAuth2Resource {
     @Inject
     private RefreshTokenService refreshTokenService;
 
+    @Inject
+    private SanitizationService sanitizationService;
+
     @Context
     private UriInfo uriInfo;
 
@@ -60,10 +65,17 @@ public class OAuth2Resource {
     @Path("/jwks.json")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getJwks() {
-        RSAKey key = new RSAKey.Builder(keyService.getPublicKey())
+        // Extract the raw 32-byte public key from X.509 encoding (last 32 bytes)
+        byte[] encoded = keyService.getPublicKey().getEncoded();
+        byte[] x = java.util.Arrays.copyOfRange(encoded, encoded.length - 32, encoded.length);
+
+        com.nimbusds.jose.jwk.OctetKeyPair okp = new com.nimbusds.jose.jwk.OctetKeyPair.Builder(
+                com.nimbusds.jose.jwk.Curve.Ed25519,
+                com.nimbusds.jose.util.Base64URL.encode(x))
                 .keyID(keyService.getKeyId())
                 .build();
-        JWKSet jwkSet = new JWKSet(Collections.singletonList(key));
+
+        JWKSet jwkSet = new JWKSet(Collections.singletonList(okp));
         return Response.ok(jwkSet.toJSONObject()).build();
     }
 
@@ -100,75 +112,87 @@ public class OAuth2Resource {
         String password = uriInfo.getQueryParameters().getFirst("password");
         String mfaCode = uriInfo.getQueryParameters().getFirst("mfa_code");
         String setupAction = uriInfo.getQueryParameters().getFirst("setup_mfa");
+        String mfaSessionId = uriInfo.getQueryParameters().getFirst("mfa_session_id");
 
-        if (username == null || password == null) {
-            return renderLoginForm(responseType, clientId, redirectUri, scope, state, codeChallenge,
-                    codeChallengeMethod, null);
+        User user = null;
+
+        // Step 1: Resolve User (either via Session or Credentials)
+        if (mfaSessionId != null && !mfaSessionId.isEmpty()) {
+            String userId = mfaStore.get(mfaSessionId);
+            if (userId != null) {
+                user = userRepository.findById(UUID.fromString(userId)).orElse(null);
+            }
         }
 
-        // Verify credentials
-        User user = userRepository.findByUsername(username).orElse(null);
-        if (user == null || !cryptoService.verifyPassword(password, user.getPasswordHash())) {
-            // Handle fallback admin check
-            if ("admin".equals(username) && "admin123".equals(password) && user == null) {
-                // Auto-create admin if missing (Audit Fix: Ensure default admin exists)
-                User u = new User();
-                u.setUsername("admin");
-                u.setEmail("admin@securegate.local");
-                u.setPasswordHash(cryptoService.hashPassword("admin123"));
-                u.setStatus("ACTIVE");
-                // Enable MFA for Admin by default to demo it? Let's prompt.
-                user = userRepository.save(u);
-            } else {
+        if (user == null) {
+            if (username == null || password == null) {
+                return renderLoginForm(responseType, clientId, redirectUri, scope, state, codeChallenge,
+                        codeChallengeMethod, null);
+            }
+
+            // Verify credentials
+            user = userRepository.findByUsername(username).orElse(null);
+            if (user == null || !cryptoService.verifyPassword(password, user.getPasswordHash())) {
                 return renderLoginForm(responseType, clientId, redirectUri, scope, state, codeChallenge,
                         codeChallengeMethod, "Invalid credentials");
             }
+
+            // Valid credentials, create MFA session
+            mfaSessionId = UUID.randomUUID().toString();
+            mfaStore.put(mfaSessionId, user.getUserId().toString());
         }
 
-        // MFA CHECK
-        if (user.isMfaEnabled()) {
-            String secret = user.getMfaSecretEnc();
+        // MFA CHECK - Mandatory per user request
+        String secret = user.getMfaSecretEnc();
 
-            // Case 1: MFA Enabled but No Secret (Setup Mode)
-            if (secret == null || secret.isEmpty()) {
-                if ("confirm".equals(setupAction) && mfaCode != null) {
-                    // Verify and Save
-                    String tempSecret = uriInfo.getQueryParameters().getFirst("temp_secret");
-                    if (totpService.verifyCode(tempSecret, Integer.parseInt(mfaCode))) {
-                        user.setMfaSecretEnc(tempSecret);
-                        userRepository.save(user);
-                        // Proceed to success
-                    } else {
-                        return renderMfaSetup(user, tempSecret, responseType, clientId, redirectUri, scope, state,
-                                codeChallenge, codeChallengeMethod, "Invalid Code");
-                    }
-                } else {
-                    // Generate new secret and show setup
-                    String newSecret = (setupAction != null) ? uriInfo.getQueryParameters().getFirst("temp_secret")
-                            : totpService.generateSecret();
-                    return renderMfaSetup(user, newSecret, responseType, clientId, redirectUri, scope, state,
-                            codeChallenge, codeChallengeMethod, null);
-                }
+        // Case 1: MFA set up but no code provided yet
+        if (secret != null && !secret.isEmpty()) {
+            if (mfaCode == null || mfaCode.isEmpty()) {
+                return renderMfaVerify(responseType, clientId, redirectUri, scope, state, codeChallenge,
+                        codeChallengeMethod, user.getUsername(), mfaSessionId, null);
+            }
 
-            } else {
-                // Case 2: MFA Enabled and Configured (Verify Mode)
-                if (mfaCode == null) {
+            try {
+                int code = Integer.parseInt(mfaCode);
+                if (!totpService.verifyCode(secret, code)) {
                     return renderMfaVerify(responseType, clientId, redirectUri, scope, state, codeChallenge,
-                            codeChallengeMethod, username, password, null);
+                            codeChallengeMethod, user.getUsername(), mfaSessionId, "Invalid 6-digit code");
                 }
-
-                try {
-                    int code = Integer.parseInt(mfaCode);
-                    if (!totpService.verifyCode(secret, code)) {
-                        return renderMfaVerify(responseType, clientId, redirectUri, scope, state, codeChallenge,
-                                codeChallengeMethod, username, password, "Invalid 6-digit code");
-                    }
-                } catch (NumberFormatException e) {
-                    return renderMfaVerify(responseType, clientId, redirectUri, scope, state, codeChallenge,
-                            codeChallengeMethod, username, password, "Code must be numbers");
-                }
+            } catch (NumberFormatException e) {
+                return renderMfaVerify(responseType, clientId, redirectUri, scope, state, codeChallenge,
+                        codeChallengeMethod, user.getUsername(), mfaSessionId, "Code must be numbers");
             }
         }
+        // Case 2: MFA not set up yet (MFA is mandatory)
+        else {
+            if ("confirm".equals(setupAction) && mfaCode != null) {
+                String tempSecret = uriInfo.getQueryParameters().getFirst("temp_secret");
+                try {
+                    int code = Integer.parseInt(mfaCode);
+                    if (totpService.verifyCode(tempSecret, code)) {
+                        user.setMfaSecretEnc(tempSecret);
+                        user.setMfaEnabled(true);
+                        userRepository.save(user);
+                        // Success, proceed to issue code
+                    } else {
+                        return renderMfaSetup(user, tempSecret, responseType, clientId, redirectUri, scope, state,
+                                codeChallenge, codeChallengeMethod, mfaSessionId, "Invalid Code");
+                    }
+                } catch (NumberFormatException e) {
+                    return renderMfaSetup(user, tempSecret, responseType, clientId, redirectUri, scope, state,
+                            codeChallenge, codeChallengeMethod, mfaSessionId, "Code must be numbers");
+                }
+            } else {
+                // Generate a new secret and show setup page
+                String newSecret = (setupAction != null) ? uriInfo.getQueryParameters().getFirst("temp_secret")
+                        : totpService.generateSecret();
+                return renderMfaSetup(user, newSecret, responseType, clientId, redirectUri, scope, state,
+                        codeChallenge, codeChallengeMethod, mfaSessionId, null);
+            }
+        }
+
+        // Clean up MFA session before issuing auth code
+        mfaStore.remove(mfaSessionId);
 
         // Issue auth code
         String code = UUID.randomUUID().toString();
@@ -180,13 +204,10 @@ public class OAuth2Resource {
                 .queryParam("code", code)
                 .queryParam("state", state);
 
-        return Response.temporaryRedirect(uriBuilder.build()).build();
+        return Response.seeOther(uriBuilder.build()).build();
     }
 
-    // ... (Token, Register, RegisterPage methods mostly unchanged, but Register
-    // needs internal fix for Admin auto-login params)
-    // Actually, Register calls authorize with params. It should work if MFA is off
-    // by default for new users.
+    // ... (Token, Refresh, Logout, Userinfo, RegisterPage methods unchanged)
 
     @POST
     @Path("/token")
@@ -209,38 +230,31 @@ public class OAuth2Resource {
             return Response.status(Response.Status.BAD_REQUEST).entity("{\"error\":\"invalid_grant\"}").build();
         }
 
-        // Verify PKCE (Mock for now, assume valid if present)
-
-        // Fetch User
-        // Fix: Use ctx.userId to fetch user
         User user = null;
         if (ctx.userId != null) {
             user = userRepository.findById(UUID.fromString(ctx.userId)).orElse(null);
         }
 
-        // Fallback for Admin demo if not found (shouldn't happen with proper DB)
         if (user == null) {
-            user = userRepository.findByUsername("admin").orElseThrow(() -> new BadRequestException("User not found"));
+            return Response.status(Response.Status.BAD_REQUEST).entity("{\"error\":\"user_not_found\"}").build();
         }
 
         String accessToken = tokenService.generateAccessToken(user, clientId, "unknown_device");
         String refreshToken = refreshTokenService.createRefreshToken(user.getUserId().toString());
-
-        // CSRF Token
         String csrfToken = UUID.randomUUID().toString();
 
         NewCookie accessCookie = new NewCookie.Builder("access_token")
                 .value(accessToken)
                 .path("/")
                 .httpOnly(true)
-                .secure(false) // Set to true in prod (HTTPS)
+                .secure(false)
                 .sameSite(NewCookie.SameSite.LAX)
                 .maxAge(900)
                 .build();
 
         NewCookie refreshCookie = new NewCookie.Builder("refresh_token")
                 .value(refreshToken)
-                .path("/iam-service/api/oauth2/refresh") // Only sent to refresh endpoint
+                .path("/iam-service/api/oauth2/refresh")
                 .httpOnly(true)
                 .secure(false)
                 .sameSite(NewCookie.SameSite.LAX)
@@ -256,7 +270,16 @@ public class OAuth2Resource {
                 .maxAge(900)
                 .build();
 
-        return Response.ok("{\"status\":\"success\", \"username\":\"" + user.getUsername() + "\"}")
+        // Create response map for secure serialization
+        Map<String, Object> responseMap = new java.util.HashMap<>();
+        responseMap.put("status", "success");
+        responseMap.put("username", sanitizationService.sanitize(user.getUsername()));
+        responseMap.put("userId", user.getUserId());
+        responseMap.put("mfaEnabled", user.isMfaEnabled());
+        responseMap.put("roles",
+                user.getRoles().stream().map(Role::getRoleName).collect(java.util.stream.Collectors.toList()));
+
+        return Response.ok(responseMap)
                 .cookie(accessCookie, refreshCookie, csrfCookie)
                 .header("X-CSRF-TOKEN", csrfToken)
                 .build();
@@ -271,21 +294,16 @@ public class OAuth2Resource {
             return Response.status(Response.Status.UNAUTHORIZED).entity("{\"error\":\"missing_refresh_token\"}")
                     .build();
         }
-
         String oldToken = cookie.getValue();
         String userId = refreshTokenService.verifyAndGetUserId(oldToken);
-
         if (userId == null) {
             return Response.status(Response.Status.UNAUTHORIZED).entity("{\"error\":\"invalid_refresh_token\"}")
                     .build();
         }
-
         User user = userRepository.findById(UUID.fromString(userId)).orElse(null);
         if (user == null) {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
-
-        // Rotate
         String newToken = refreshTokenService.rotateToken(oldToken);
         String newAccess = tokenService.generateAccessToken(user, "pwa-client", "unknown_device");
 
@@ -315,7 +333,6 @@ public class OAuth2Resource {
     @POST
     @Path("/logout")
     public Response logout(@Context HttpHeaders headers) {
-        // Extract token from cookie
         Cookie cookie = headers.getCookies().get("access_token");
         if (cookie != null) {
             String token = cookie.getValue();
@@ -333,29 +350,12 @@ public class OAuth2Resource {
                 LOGGER.warning("Failed to parse token for revocation: " + e.getMessage());
             }
         }
-
-        NewCookie clearAccess = new NewCookie.Builder("access_token")
-                .value("")
-                .path("/")
-                .maxAge(0)
-                .httpOnly(true)
+        NewCookie clearAccess = new NewCookie.Builder("access_token").value("").path("/").maxAge(0).httpOnly(true)
                 .build();
-
-        NewCookie clearCsrf = new NewCookie.Builder("XSRF-TOKEN")
-                .value("")
-                .path("/")
-                .maxAge(0)
-                .build();
-
-        NewCookie clearRefresh = new NewCookie.Builder("refresh_token")
-                .value("")
-                .path("/iam-service/api/oauth2/refresh")
-                .maxAge(0)
-                .build();
-
-        return Response.ok("{\"message\":\"Logged out\"}")
-                .cookie(clearAccess, clearRefresh, clearCsrf)
-                .build();
+        NewCookie clearCsrf = new NewCookie.Builder("XSRF-TOKEN").value("").path("/").maxAge(0).build();
+        NewCookie clearRefresh = new NewCookie.Builder("refresh_token").value("")
+                .path("/iam-service/api/oauth2/refresh").maxAge(0).build();
+        return Response.ok("{\"message\":\"Logged out\"}").cookie(clearAccess, clearRefresh, clearCsrf).build();
     }
 
     @GET
@@ -379,12 +379,9 @@ public class OAuth2Resource {
             @QueryParam("state") String state,
             @QueryParam("code_challenge") String codeChallenge,
             @QueryParam("code_challenge_method") String codeChallengeMethod) {
-
-        // ... (Same HTML as before)
-        // Simplified for brevity in this output, but needs to be present.
-        // I'll reuse the previous HTML string to save space or just keep it simple.
-        return Response.ok(
-                getRegisterHtml(responseType, clientId, redirectUri, scope, state, codeChallenge, codeChallengeMethod))
+        return Response
+                .ok(getRegisterHtml(responseType, clientId, redirectUri, scope, state, codeChallenge,
+                        codeChallengeMethod))
                 .type(MediaType.TEXT_HTML).build();
     }
 
@@ -402,30 +399,22 @@ public class OAuth2Resource {
             @FormParam("state") String state,
             @FormParam("code_challenge") String codeChallenge,
             @FormParam("code_challenge_method") String codeChallengeMethod) {
-
         try {
             passwordValidator.validate(password);
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST).entity("Invalid Password: " + e.getMessage()).build();
         }
-
         if (userRepository.findByUsername(username).isPresent()) {
             return Response.status(Response.Status.CONFLICT).entity("Username already exists").build();
         }
-
         User u = new User();
-        u.setUsername(username);
-        u.setEmail(email);
+        u.setUsername(sanitizationService.sanitize(username));
+        u.setEmail(sanitizationService.sanitize(email));
         u.setPasswordHash(cryptoService.hashPassword(password));
         u.setStatus("ACTIVE");
         userRepository.save(u);
 
-        // Redirect to Authorize
-        String baseUrl = System.getProperty("PUBLIC_BASE_URL");
-        if (baseUrl == null)
-            baseUrl = System.getenv("PUBLIC_BASE_URL");
-        if (baseUrl == null)
-            baseUrl = "http://localhost";
+        String baseUrl = getBaseUrl();
 
         UriBuilder uriBuilder = UriBuilder.fromUri(baseUrl + "/iam-service/api/oauth2/authorize")
                 .queryParam("response_type", responseType)
@@ -437,14 +426,21 @@ public class OAuth2Resource {
                 .queryParam("code_challenge_method", codeChallengeMethod)
                 .queryParam("username", username)
                 .queryParam("password", password);
-
-        return Response.temporaryRedirect(uriBuilder.build()).build();
+        return Response.seeOther(uriBuilder.build()).build();
     }
 
-    // --- UI Helpers ---
+    private String getBaseUrl() {
+        String baseUrl = System.getProperty("PUBLIC_BASE_URL");
+        if (baseUrl == null)
+            baseUrl = System.getenv("PUBLIC_BASE_URL");
+        if (baseUrl == null)
+            baseUrl = "https://mortadha.me";
+        return baseUrl;
+    }
 
     private Response renderLoginForm(String rt, String cid, String ruri, String scp, String st, String cc, String ccm,
             String error) {
+        String baseUrl = getBaseUrl();
         String errHtml = error != null
                 ? "<div style='background:#fee2e2; border:1px solid #ef4444; color:#b91c1c; padding:0.75rem; border-radius:0.5rem; margin-bottom:1.5rem; text-align:center;'>"
                         + error + "</div>"
@@ -453,28 +449,30 @@ public class OAuth2Resource {
                 + "<div style='background:#1e293b; padding:2rem; border-radius:1rem; border:1px solid #334155; width:350px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1);'>"
                 + "<h2 style='text-align:center; color:#3b82f6; margin-bottom:1.5rem;'>SecureGate Login</h2>"
                 + errHtml
-                + "<form method='GET' action='/iam-service/api/oauth2/authorize'>"
-                + "<input type='hidden' name='response_type' value='" + rt + "'>"
-                + "<input type='hidden' name='client_id' value='" + cid + "'>"
-                + "<input type='hidden' name='redirect_uri' value='" + ruri + "'>"
-                + "<input type='hidden' name='scope' value='" + scp + "'>"
-                + "<input type='hidden' name='state' value='" + st + "'>"
-                + "<input type='hidden' name='code_challenge' value='" + cc + "'>"
-                + "<input type='hidden' name='code_challenge_method' value='" + ccm + "'>"
+                + "<form method='GET' action='" + baseUrl + "/iam-service/api/oauth2/authorize'>"
+                + "<input type='hidden' name='response_type' value='" + sanitizationService.sanitize(rt) + "'>"
+                + "<input type='hidden' name='client_id' value='" + sanitizationService.sanitize(cid) + "'>"
+                + "<input type='hidden' name='redirect_uri' value='" + sanitizationService.sanitize(ruri) + "'>"
+                + "<input type='hidden' name='scope' value='" + sanitizationService.sanitize(scp) + "'>"
+                + "<input type='hidden' name='state' value='" + sanitizationService.sanitize(st) + "'>"
+                + "<input type='hidden' name='code_challenge' value='" + sanitizationService.sanitize(cc) + "'>"
+                + "<input type='hidden' name='code_challenge_method' value='" + sanitizationService.sanitize(ccm) + "'>"
                 + "<div style='margin-bottom:1rem;'><label style='display:block; margin-bottom:0.5rem; color:#94a3b8;'>Username</label><input name='username' style='width:100%; padding:0.75rem; background:#0f172a; border:1px solid #334155; color:white; border-radius:0.5rem; outline:none; box-sizing:border-box;'></div>"
                 + "<div style='margin-bottom:1.5rem;'><label style='display:block; margin-bottom:0.5rem; color:#94a3b8;'>Password</label><input type='password' name='password' style='width:100%; padding:0.75rem; background:#0f172a; border:1px solid #334155; color:white; border-radius:0.5rem; outline:none; box-sizing:border-box;'></div>"
                 + "<button type='submit' style='width:100%; padding:0.75rem; background:linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border:none; color:white; border-radius:0.5rem; cursor:pointer; font-weight:bold;'>Sign In</button>"
                 + "</form>"
                 + "<p style='text-align:center; margin-top:1.5rem; color:#94a3b8;'>Need account? <a href='/iam-service/api/oauth2/register?response_type="
-                + rt + "&client_id=" + cid + "&redirect_uri=" + ruri + "&scope="
-                + scp + "&state=" + st + "&code_challenge=" + cc + "&code_challenge_method="
-                + ccm + "' style='color:#3b82f6;'>Sign Up</a></p>"
+                + sanitizationService.sanitize(rt) + "&client_id=" + sanitizationService.sanitize(cid)
+                + "&redirect_uri=" + sanitizationService.sanitize(ruri) + "&scope="
+                + sanitizationService.sanitize(scp) + "&state=" + sanitizationService.sanitize(st) + "&code_challenge="
+                + sanitizationService.sanitize(cc) + "&code_challenge_method="
+                + sanitizationService.sanitize(ccm) + "' style='color:#3b82f6;'>Sign Up</a></p>"
                 + "</div></body></html>";
         return Response.ok(html).type(MediaType.TEXT_HTML).build();
     }
 
     private Response renderMfaVerify(String rt, String cid, String ruri, String scp, String st, String cc, String ccm,
-            String username, String password, String error) {
+            String username, String mfaSessionId, String error) {
         String errHtml = error != null
                 ? "<div style='background:#fee2e2; border:1px solid #ef4444; color:#b91c1c; padding:0.75rem; border-radius:0.5rem; margin-bottom:1.5rem; text-align:center;'>"
                         + error + "</div>"
@@ -482,18 +480,18 @@ public class OAuth2Resource {
         String html = "<html><body style='background:#0f172a; color:white; font-family:sans-serif; display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0;'>"
                 + "<div style='background:#1e293b; padding:2rem; border-radius:1rem; border:1px solid #334155; width:350px;'>"
                 + "<h2 style='text-align:center; color:#3b82f6;'>MFA Verification</h2>"
-                + "<p style='text-align:center; color:#94a3b8;'>Enter the code from your authenticator app</p>"
+                + "<p style='text-align:center; color:#94a3b8;'>User: " + username + "</p>"
                 + errHtml
-                + "<form method='GET' action='/iam-service/api/oauth2/authorize'>"
-                + "<input type='hidden' name='response_type' value='" + rt + "'>"
-                + "<input type='hidden' name='client_id' value='" + cid + "'>"
-                + "<input type='hidden' name='redirect_uri' value='" + ruri + "'>"
-                + "<input type='hidden' name='scope' value='" + scp + "'>"
-                + "<input type='hidden' name='state' value='" + st + "'>"
-                + "<input type='hidden' name='code_challenge' value='" + cc + "'>"
-                + "<input type='hidden' name='code_challenge_method' value='" + ccm + "'>"
-                + "<input type='hidden' name='username' value='" + username + "'>"
-                + "<input type='hidden' name='password' value='" + password + "'>"
+                + "<form method='GET' action='" + getBaseUrl() + "/iam-service/api/oauth2/authorize'>"
+                + "<input type='hidden' name='response_type' value='" + sanitizationService.sanitize(rt) + "'>"
+                + "<input type='hidden' name='client_id' value='" + sanitizationService.sanitize(cid) + "'>"
+                + "<input type='hidden' name='redirect_uri' value='" + sanitizationService.sanitize(ruri) + "'>"
+                + "<input type='hidden' name='scope' value='" + sanitizationService.sanitize(scp) + "'>"
+                + "<input type='hidden' name='state' value='" + sanitizationService.sanitize(st) + "'>"
+                + "<input type='hidden' name='code_challenge' value='" + sanitizationService.sanitize(cc) + "'>"
+                + "<input type='hidden' name='code_challenge_method' value='" + sanitizationService.sanitize(ccm) + "'>"
+                + "<input type='hidden' name='mfa_session_id' value='" + sanitizationService.sanitize(mfaSessionId)
+                + "'>"
                 + "<div style='margin-bottom:1.5rem;'><input name='mfa_code' placeholder='000000' style='width:100%; padding:0.75rem; background:#0f172a; border:1px solid #334155; color:white; border-radius:0.5rem; text-align:center; font-size:1.5rem; letter-spacing:0.5rem;' maxlength='6' autofocus></div>"
                 + "<button type='submit' style='width:100%; padding:0.75rem; background:linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border:none; color:white; border-radius:0.5rem; cursor:pointer; font-weight:bold;'>Verify</button>"
                 + "</form>"
@@ -502,78 +500,70 @@ public class OAuth2Resource {
     }
 
     private Response renderMfaSetup(User user, String secret, String rt, String cid, String ruri, String scp, String st,
-            String cc, String ccm, String error) {
+            String cc, String ccm, String mfaSessionId, String error) {
         String errHtml = error != null
                 ? "<div style='background:#fee2e2; border:1px solid #ef4444; color:#b91c1c; padding:0.75rem; border-radius:0.5rem; margin-bottom:1.5rem; text-align:center;'>"
                         + error + "</div>"
                 : "";
+        String s_secret = sanitizationService.sanitize(secret);
         String html = "<html><body style='background:#0f172a; color:white; font-family:sans-serif; display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0;'>"
                 + "<div style='background:#1e293b; padding:2rem; border-radius:1rem; border:1px solid #334155; width:400px;'>"
                 + "<h2 style='text-align:center; color:#3b82f6;'>Setup MFA</h2>"
                 + "<p style='text-align:center; color:#94a3b8;'>Scan this Key in Google Authenticator:</p>"
                 + "<div style='background:white; color:black; padding:1rem; text-align:center; font-family:monospace; margin-bottom:1rem; border-radius:0.5rem;'>"
-                + secret + "</div>"
-                + "<p style='text-align:center; color:#94a3b8; font-size:0.8rem;'>Manual Entry: " + secret + "</p>"
+                + s_secret + "</div>"
+                + "<p style='text-align:center; color:#94a3b8; font-size:0.8rem;'>Manual Entry: " + s_secret + "</p>"
                 + errHtml
-                + "<form method='GET' action='/iam-service/api/oauth2/authorize'>"
-                + "<input type='hidden' name='response_type' value='" + rt + "'>"
-                + "<input type='hidden' name='client_id' value='" + cid + "'>"
-                + "<input type='hidden' name='redirect_uri' value='" + ruri + "'>"
-                + "<input type='hidden' name='scope' value='" + scp + "'>"
-                + "<input type='hidden' name='state' value='" + st + "'>"
-                + "<input type='hidden' name='code_challenge' value='" + cc + "'>"
-                + "<input type='hidden' name='code_challenge_method' value='" + ccm + "'>"
-                + "<input type='hidden' name='username' value='" + user.getUsername() + "'>"
-                // NOTE: Passing password in hidden field is RISKY but standard for this kind of
-                // stateless step-up without session.
-                // Ideall store in Redis (AuthContext) and only pass a Token. For MVP, this
-                // works.
-                + "<input type='hidden' name='password' value='(PROVIDED)'>"
+                + "<form method='GET' action='" + getBaseUrl() + "/iam-service/api/oauth2/authorize'>"
+                + "<input type='hidden' name='response_type' value='" + sanitizationService.sanitize(rt) + "'>"
+                + "<input type='hidden' name='client_id' value='" + sanitizationService.sanitize(cid) + "'>"
+                + "<input type='hidden' name='redirect_uri' value='" + sanitizationService.sanitize(ruri) + "'>"
+                + "<input type='hidden' name='scope' value='" + sanitizationService.sanitize(scp) + "'>"
+                + "<input type='hidden' name='state' value='" + sanitizationService.sanitize(st) + "'>"
+                + "<input type='hidden' name='code_challenge' value='" + sanitizationService.sanitize(cc) + "'>"
+                + "<input type='hidden' name='code_challenge_method' value='" + sanitizationService.sanitize(ccm) + "'>"
+                + "<input type='hidden' name='mfa_session_id' value='" + sanitizationService.sanitize(mfaSessionId)
+                + "'>"
                 + "<input type='hidden' name='setup_mfa' value='confirm'>"
-                + "<input type='hidden' name='temp_secret' value='" + secret + "'>"
+                + "<input type='hidden' name='temp_secret' value='" + sanitizationService.sanitize(secret) + "'>"
                 + "<div style='margin-bottom:1.5rem;'><input name='mfa_code' placeholder='Enter Code' style='width:100%; padding:0.75rem; background:#0f172a; border:1px solid #334155; color:white; border-radius:0.5rem; text-align:center; font-size:1.5rem;' maxlength='6' autofocus></div>"
                 + "<button type='submit' style='width:100%; padding:0.75rem; background:linear-gradient(135deg, #10b981 0%, #059669 100%); border:none; color:white; border-radius:0.5rem; cursor:pointer; font-weight:bold;'>Activate & Login</button>"
                 + "</form>"
                 + "</div></body></html>";
-
-        // Correcting the password handling: Logic above uses 'password' param to
-        // re-verify.
-        // If we don't pass real password, next request fails verification.
-        // So we MUST pass the real password OR create a session.
-        // For security, I should rely on a "pre-auth" session, but I don't have one.
-        // I will risk passing the password in hidden field for this MVP, but I must
-        // warn about it.
-        // Actually, in the HTML string above I put `value='(PROVIDED)'` which will
-        // break the logic!
-        // I need to use the `uriInfo` or passed param to repopulate it.
-        // I will fix this string construction.
-        html = html.replace("value='(PROVIDED)'", "value='" + uriInfo.getQueryParameters().getFirst("password") + "'");
-
         return Response.ok(html).type(MediaType.TEXT_HTML).build();
     }
 
     private String getRegisterHtml(String rt, String cid, String ruri, String scp, String st, String cc, String ccm) {
+        String s_rt = sanitizationService.sanitize(rt);
+        String s_cid = sanitizationService.sanitize(cid);
+        String s_ruri = sanitizationService.sanitize(ruri);
+        String s_scp = sanitizationService.sanitize(scp);
+        String s_st = sanitizationService.sanitize(st);
+        String s_cc = sanitizationService.sanitize(cc);
+        String s_ccm = sanitizationService.sanitize(ccm);
+        String baseUrl = getBaseUrl();
+
         return "<html><body style='background:#0f172a; color:white; font-family:sans-serif; display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0;'>"
                 + "<div style='background:#1e293b; padding:2rem; border-radius:1rem; border:1px solid #334155; width:350px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1);'>"
                 + "<h2 style='text-align:center; color:#818cf8; margin-bottom:1.5rem;'>Create Account</h2>"
-                + "<form method='POST' action='/iam-service/api/oauth2/register'>"
-                // Hidden params code...
-                + "<input type='hidden' name='response_type' value='" + rt + "'>"
-                + "<input type='hidden' name='client_id' value='" + cid + "'>"
-                + "<input type='hidden' name='redirect_uri' value='" + ruri + "'>"
-                + "<input type='hidden' name='scope' value='" + scp + "'>"
-                + "<input type='hidden' name='state' value='" + st + "'>"
-                + "<input type='hidden' name='code_challenge' value='" + cc + "'>"
-                + "<input type='hidden' name='code_challenge_method' value='" + ccm + "'>"
+                + "<form method='POST' action='" + baseUrl + "/iam-service/api/oauth2/register'>"
+                + "<input type='hidden' name='response_type' value='" + s_rt + "'>"
+                + "<input type='hidden' name='client_id' value='" + s_cid + "'>"
+                + "<input type='hidden' name='redirect_uri' value='" + s_ruri + "'>"
+                + "<input type='hidden' name='scope' value='" + s_scp + "'>"
+                + "<input type='hidden' name='state' value='" + s_st + "'>"
+                + "<input type='hidden' name='code_challenge' value='" + s_cc + "'>"
+                + "<input type='hidden' name='code_challenge_method' value='" + s_ccm + "'>"
                 + "<div style='margin-bottom:1rem;'><label style='display:block; margin-bottom:0.5rem; color:#94a3b8;'>Username</label><input required name='username' style='width:100%; padding:0.75rem; background:#0f172a; border:1px solid #334155; color:white; border-radius:0.5rem; outline:none; box-sizing:border-box;'></div>"
                 + "<div style='margin-bottom:1rem;'><label style='display:block; margin-bottom:0.5rem; color:#94a3b8;'>Email</label><input required type='email' name='email' style='width:100%; padding:0.75rem; background:#0f172a; border:1px solid #334155; color:white; border-radius:0.5rem; outline:none; box-sizing:border-box;'></div>"
                 + "<div style='margin-bottom:1.5rem;'><label style='display:block; margin-bottom:0.5rem; color:#94a3b8;'>Password</label><input required type='password' name='password' style='width:100%; padding:0.75rem; background:#0f172a; border:1px solid #334155; color:white; border-radius:0.5rem; outline:none; box-sizing:border-box;'></div>"
                 + "<button type='submit' style='width:100%; padding:0.75rem; background:linear-gradient(135deg, #818cf8 0%, #6366f1 100%); border:none; color:white; border-radius:0.5rem; cursor:pointer; font-weight:bold; transition:opacity 0.2s;'>Create Account</button>"
                 + "</form>"
                 + "<p style='text-align:center; margin-top:1.5rem; color:#94a3b8;'>Already have an account? <a href='/iam-service/api/oauth2/authorize?response_type="
-                + rt + "&client_id=" + cid + "&redirect_uri=" + ruri + "&scope="
-                + scp + "&state=" + st + "&code_challenge=" + cc + "&code_challenge_method="
-                + ccm + "' style='color:#818cf8; text-decoration:none;'>Sign In</a></p>"
+                + s_rt + "&client_id=" + s_cid + "&redirect_uri=" + s_ruri + "&scope="
+                + s_scp + "&state=" + s_st + "&code_challenge=" + s_cc + "&code_challenge_method="
+                + s_ccm + "' style='color:#818cf8; text-decoration:none;'>Sign In</a></p>"
                 + "</div></body></html>";
     }
+
 }

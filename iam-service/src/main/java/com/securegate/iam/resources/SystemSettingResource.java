@@ -6,6 +6,8 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.SecurityContext;
 import java.time.Instant;
 import java.util.*;
 
@@ -14,11 +16,17 @@ import java.util.*;
 @Consumes(MediaType.APPLICATION_JSON)
 public class SystemSettingResource {
 
+    @Context
+    private SecurityContext sc;
+
     @Inject
     private SystemSettingRepository settingRepository;
 
     @GET
     public Response getSettings() {
+        if (!sc.isUserInRole("ADMIN")) {
+            return Response.status(Response.Status.FORBIDDEN).build();
+        }
         List<SystemSetting> settings = settingRepository.findAll();
 
         // If no settings in database, return production-like mock data
@@ -50,6 +58,9 @@ public class SystemSettingResource {
     @PUT
     @Path("/{key}")
     public Response updateSetting(@PathParam("key") String key, SettingRequest request) {
+        if (!sc.isUserInRole("ADMIN")) {
+            return Response.status(Response.Status.FORBIDDEN).build();
+        }
         Optional<SystemSetting> existing = settingRepository.findByKey(key);
         SystemSetting setting;
 
@@ -83,6 +94,9 @@ public class SystemSettingResource {
     @POST
     @Path("/reset")
     public Response resetToDefaults() {
+        if (!sc.isUserInRole("ADMIN")) {
+            return Response.status(Response.Status.FORBIDDEN).build();
+        }
         // In production, this would reset all settings to defaults
         return Response.ok(Map.of("message", "Settings reset to defaults")).build();
     }
@@ -90,6 +104,9 @@ public class SystemSettingResource {
     @GET
     @Path("/export")
     public Response exportSettings() {
+        if (!sc.isUserInRole("ADMIN")) {
+            return Response.status(Response.Status.FORBIDDEN).build();
+        }
         List<SystemSetting> settings = settingRepository.findAll();
         if (settings.isEmpty()) {
             settings = generateMockSettings();
@@ -104,6 +121,9 @@ public class SystemSettingResource {
     @POST
     @Path("/import")
     public Response importSettings(Map<String, String> settings) {
+        if (!sc.isUserInRole("ADMIN")) {
+            return Response.status(Response.Status.FORBIDDEN).build();
+        }
         for (Map.Entry<String, String> entry : settings.entrySet()) {
             Optional<SystemSetting> existing = settingRepository.findByKey(entry.getKey());
             SystemSetting setting;

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:h="jakarta.faces.html" xmlns:f="jakarta.faces.core"
+    xmlns:p="http://primefaces.org/ui">
+
+<h:head>
+    <title>SecureGate - Login</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .login-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            width: 350px;
+            text-align: center;
+        }
+
+        .title {
+            color: #818cf8;
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            margin-bottom: 2rem;
+        }
+    </style>
+</h:head>
+
+<h:body>
+    <div class="login-card">
+        <div class="title">SecureGate</div>
+        <div class="subtitle">Next Gen IAM Portal</div>
+
+        <h:form>
+            <p:commandButton value="Sign In with SecureGate" action="#{authController.login}"
+                styleClass="ui-button-raised ui-button-info"
+                style="width: 100%; height: 50px; font-weight: bold; font-size: 1.1rem;" />
+        </h:form>
+
+        <p style="margin-top: 1.5rem; color: #64748b; font-size: 0.8rem;">
+            Powered by Jakarta EE &amp; WildFly
+        </p>
+    </div>
+</h:body>
+
+</html>

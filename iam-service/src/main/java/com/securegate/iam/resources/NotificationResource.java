@@ -6,6 +6,8 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.SecurityContext;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -15,11 +17,17 @@ import java.util.*;
 @Consumes(MediaType.APPLICATION_JSON)
 public class NotificationResource {
 
+    @Context
+    private SecurityContext sc;
+
     @Inject
     private NotificationRepository notificationRepository;
 
     @GET
     public Response getNotifications() {
+        if (sc.getUserPrincipal() == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
         List<Notification> notifications = notificationRepository.findAll();
 
         // If no notifications in database, return production-like mock data
@@ -33,6 +41,9 @@ public class NotificationResource {
     @GET
     @Path("/unread-count")
     public Response getUnreadCount() {
+        if (sc.getUserPrincipal() == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
         List<Notification> notifications = notificationRepository.findAll();
         if (notifications.isEmpty()) {
             notifications = generateMockNotifications();
@@ -44,6 +55,9 @@ public class NotificationResource {
     @POST
     @Path("/{id}/read")
     public Response markAsRead(@PathParam("id") String id) {
+        if (sc.getUserPrincipal() == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
         try {
             Optional<Notification> notification = notificationRepository.findById(UUID.fromString(id));
             if (notification.isPresent()) {
@@ -61,6 +75,9 @@ public class NotificationResource {
     @POST
     @Path("/mark-all-read")
     public Response markAllAsRead() {
+        if (sc.getUserPrincipal() == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
         List<Notification> all = notificationRepository.findAll();
         for (Notification n : all) {
             n.setRead(true);
@@ -72,6 +89,9 @@ public class NotificationResource {
     @DELETE
     @Path("/{id}")
     public Response deleteNotification(@PathParam("id") String id) {
+        if (sc.getUserPrincipal() == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
         try {
             notificationRepository.delete(UUID.fromString(id));
         } catch (IllegalArgumentException e) {
@@ -83,6 +103,9 @@ public class NotificationResource {
     @DELETE
     @Path("/clear")
     public Response clearAll() {
+        if (!sc.isUserInRole("ADMIN")) {
+            return Response.status(Response.Status.FORBIDDEN).build();
+        }
         // In production, this would clear all notifications
         return Response.ok(Map.of("message", "All notifications cleared")).build();
     }

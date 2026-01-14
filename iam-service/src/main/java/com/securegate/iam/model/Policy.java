@@ -1,7 +1,9 @@
 package com.securegate.iam.model;
 
 import jakarta.persistence.*;
+import jakarta.json.bind.annotation.JsonbProperty;
 import java.io.Serializable;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
@@ -10,32 +12,53 @@ public class Policy implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "policyId")
     private UUID policyId;
 
-    @Column(nullable = false)
+    @Column(name = "priority", nullable = false)
+    @JsonbProperty("priority")
+    private int priority = 1;
+
+    @Column(nullable = false, unique = true)
+    @JsonbProperty("name")
     private String name;
 
-    @Column(nullable = false)
-    private String effect; // PERMIT or DENY
-
-    @Column(nullable = false)
-    private String resource;
-
-    @Column(nullable = false)
-    private String action;
-
     @Column(columnDefinition = "TEXT")
+    @JsonbProperty("description")
     private String description;
 
-    @Column(columnDefinition = "TEXT")
-    private String conditions;
-
     @Column(nullable = false)
-    private Integer priority;
+    @JsonbProperty("effect")
+    private String effect; // ALLOW, DENY
+
+    @Column(name = "risk_level")
+    @JsonbProperty("riskLevel")
+    private String riskLevel; // LOW, MEDIUM, HIGH, CRITICAL
+
+    @Column(name = "created_by")
+    @JsonbProperty("createdBy")
+    private String createdBy;
+
+    @Column(name = "created_at", insertable = false, updatable = false)
+    private OffsetDateTime createdAt;
 
     @Column(name = "is_active", nullable = false)
-    private boolean active;
+    @JsonbProperty("active")
+    private boolean active = true;
 
+    @Column(nullable = false)
+    @JsonbProperty("resource")
+    private String resource; // e.g., "USER", "*", "POLICY"
+
+    @Column(nullable = false)
+    @JsonbProperty("action")
+    private String action; // e.g., "CREATE", "DELETE"
+
+    @Column(name = "conditions")
+    @JsonbProperty("conditions")
+    private String conditions; // e.g., "role=ADMIN"
+
+    // Getters and Setters
     public UUID getPolicyId() {
         return policyId;
     }
@@ -52,12 +75,48 @@ public class Policy implements Serializable {
         this.name = name;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     public String getEffect() {
         return effect;
     }
 
     public void setEffect(String effect) {
         this.effect = effect;
+    }
+
+    public String getRiskLevel() {
+        return riskLevel;
+    }
+
+    public void setRiskLevel(String riskLevel) {
+        this.riskLevel = riskLevel;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public OffsetDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     public String getResource() {
@@ -76,14 +135,6 @@ public class Policy implements Serializable {
         this.action = action;
     }
 
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
     public String getConditions() {
         return conditions;
     }
@@ -92,19 +143,11 @@ public class Policy implements Serializable {
         this.conditions = conditions;
     }
 
-    public Integer getPriority() {
+    public int getPriority() {
         return priority;
     }
 
-    public void setPriority(Integer priority) {
+    public void setPriority(int priority) {
         this.priority = priority;
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
     }
 }

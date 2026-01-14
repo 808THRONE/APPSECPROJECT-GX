@@ -28,8 +28,9 @@ public class PolicyEnforcementFilter implements ContainerRequestFilter {
         }
 
         if (annotation != null) {
-            String resource = annotation.resource();
-            String action = annotation.action();
+            // PDP Logic: Evaluate if 'user' can perform 'action' on 'resource'
+            // The 'user' variable was declared but not used after the null check.
+            // The null check for 'user' is still relevant for UNAUTHORIZED response.
             Principal user = requestContext.getSecurityContext().getUserPrincipal();
 
             if (user == null) {
@@ -38,24 +39,13 @@ public class PolicyEnforcementFilter implements ContainerRequestFilter {
             }
 
             // PDP Logic: Evaluate if 'user' can perform 'action' on 'resource'
-            // For Demo: Allow if action is "READ" or user is "admin"
-            // In Prod: Call PDP Service (GRPC/HTTP)
-
-            boolean allowed = evaluatePolicy(user.getName(), resource, action);
+            // Removing insecure mock shortcuts (admin/READ).
+            boolean allowed = requestContext.getSecurityContext().isUserInRole("ADMIN");
 
             if (!allowed) {
-                requestContext.abortWith(Response.status(Response.Status.FORBIDDEN).entity("Policy Denied").build());
+                requestContext.abortWith(Response.status(Response.Status.FORBIDDEN)
+                        .entity("{\"error\":\"Access denied by Security Policy\"}").build());
             }
         }
-    }
-
-    private boolean evaluatePolicy(String username, String resource, String action) {
-        // Simple mock PDP
-        if ("admin".equals(username))
-            return true;
-        if ("READ".equalsIgnoreCase(action))
-            return true;
-
-        return false;
     }
 }

@@ -10,12 +10,20 @@ import java.util.Optional;
 import java.util.UUID;
 
 @ApplicationScoped
+@Transactional
 public class PolicyRepository {
 
-    @PersistenceContext
+    @PersistenceContext(unitName = "iam-pu")
     private EntityManager em;
 
-    @Transactional
+    public List<Policy> findAll() {
+        return em.createQuery("SELECT p FROM Policy p", Policy.class).getResultList();
+    }
+
+    public Optional<Policy> findById(UUID id) {
+        return Optional.ofNullable(em.find(Policy.class, id));
+    }
+
     public Policy save(Policy policy) {
         if (policy.getPolicyId() == null) {
             em.persist(policy);
@@ -25,16 +33,7 @@ public class PolicyRepository {
         }
     }
 
-    public Optional<Policy> findById(UUID id) {
-        return Optional.ofNullable(em.find(Policy.class, id));
-    }
-
-    public List<Policy> findAll() {
-        return em.createQuery("SELECT p FROM Policy p", Policy.class).getResultList();
-    }
-
-    @Transactional
-    public void delete(UUID id) {
+    public void deleteById(UUID id) {
         findById(id).ifPresent(em::remove);
     }
 }

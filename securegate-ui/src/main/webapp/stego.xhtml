@@ -1,0 +1,61 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml" xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:f="http://xmlns.jcp.org/jsf/core" xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:p="http://primefaces.org/ui" template="/WEB-INF/templates/template.xhtml">
+
+    <ui:define name="title">Stego Center</ui:define>
+
+    <ui:define name="content">
+        <h1>Stego Management Center</h1>
+        <p style="color: #94a3b8; margin-bottom: 2rem;">Protect sensitive information using Syndrome Trellis Codes (STC)
+            steganography.</p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+            <p:panel header="Embed Message">
+                <h:form enctype="multipart/form-data">
+                    <div class="ui-fluid">
+                        <div class="field" style="margin-bottom: 1rem;">
+                            <p:outputLabel value="Cover Image" />
+                            <p:fileUpload value="#{stegoController.file}" mode="simple" skinSimple="true" />
+                        </div>
+                        <div class="field" style="margin-bottom: 1rem;">
+                            <p:outputLabel value="Secret Message" />
+                            <p:inputTextarea value="#{stegoController.secretMessage}" rows="3"
+                                placeholder="Enter sensitive data..." />
+                        </div>
+                        <div class="field" style="margin-bottom: 1.5rem;">
+                            <p:outputLabel value="Encryption Passphrase" />
+                            <p:password value="#{stegoController.passphrase}" toggleMask="true" />
+                        </div>
+                        <p:commandButton value="Embed &amp; Download" action="#{stegoController.embed}" ajax="false"
+                            styleClass="ui-button-primary" icon="pi pi-lock-open" />
+                    </div>
+                </h:form>
+            </p:panel>
+
+            <p:panel header="Extract Message">
+                <h:form enctype="multipart/form-data">
+                    <div class="ui-fluid">
+                        <div class="field" style="margin-bottom: 1rem;">
+                            <p:outputLabel value="Stego Image" />
+                            <p:fileUpload value="#{stegoController.file}" mode="simple" skinSimple="true" />
+                        </div>
+                        <div class="field" style="margin-bottom: 1.5rem;">
+                            <p:outputLabel value="Passphrase" />
+                            <p:password value="#{stegoController.passphrase}" toggleMask="true" />
+                        </div>
+                        <p:commandButton value="Perform Extraction" action="#{stegoController.extract}"
+                            update="stegoResult" styleClass="ui-button-warning" icon="pi pi-search" />
+                    </div>
+                </h:form>
+            </p:panel>
+        </div>
+
+        <h:panelGroup id="stegoResult" layout="block" style="margin-top: 2rem;">
+            <p:panel header="Operation Results" rendered="#{not empty stegoController.result}"
+                style="background: #0f172a !important;">
+                <pre style="color: #4ade80; margin: 0; padding: 1rem;">#{stegoController.result}</pre>
+            </p:panel>
+        </h:panelGroup>
+    </ui:define>
+
+</ui:composition>

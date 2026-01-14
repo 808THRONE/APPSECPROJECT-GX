@@ -21,7 +21,11 @@ public class StegoResource {
 
     private String getEncryptionKey() {
         String key = System.getenv("STEGO_ENCRYPTION_KEY");
-        return (key != null) ? key : "MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE="; // Fallback for dev
+        if (key == null || key.isEmpty()) {
+            throw new RuntimeException(
+                    "STEGO_ENCRYPTION_KEY environment variable is not set. Stego module cannot start safely.");
+        }
+        return key;
     }
 
     // In a real app, inputs would be multipart/form-data (Images)

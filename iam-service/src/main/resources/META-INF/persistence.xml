@@ -8,7 +8,7 @@
         <jta-data-source>java:jboss/datasources/SecureGateDS</jta-data-source>
         
         <properties>
-            <!-- Auto-create/update schema (use 'update' for prod, 'create' will drop existing) -->
+            <!-- Auto-create/update schema (reverted to update after successful reset) -->
             <property name="jakarta.persistence.schema-generation.database.action" value="update"/>
             
             

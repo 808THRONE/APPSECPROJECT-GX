@@ -9,6 +9,7 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.BadRequestException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,6 +32,7 @@ public class ProxyResource {
 
     @GET
     @Path("/users")
+    @com.securegate.api.security.RequiresPolicy(resource = "users", action = "read")
     public Response getUsers(@Context HttpHeaders httpHeaders) {
         var headers = extractHeaders(httpHeaders);
         var response = proxyClient.proxyGetWithStego("/users", headers);
@@ -40,6 +42,7 @@ public class ProxyResource {
     @GET
     @Path("/users/{id}")
     public Response getUserById(@PathParam("id") String id, @Context HttpHeaders httpHeaders) {
+        validateId(id);
         var headers = extractHeaders(httpHeaders);
         var response = proxyClient.proxyGetWithStego("/users/" + id, headers);
         return buildResponse(response);
@@ -47,6 +50,7 @@ public class ProxyResource {
 
     @POST
     @Path("/users")
+    @com.securegate.api.security.RequiresPolicy(resource = "users", action = "create")
     public Response createUser(String body, @Context HttpHeaders httpHeaders) {
         var headers = extractHeaders(httpHeaders);
         String realBody = stegoClient.extractFromStegoJson(body);
@@ -57,6 +61,7 @@ public class ProxyResource {
     @PUT
     @Path("/users/{id}")
     public Response updateUser(@PathParam("id") String id, String body, @Context HttpHeaders httpHeaders) {
+        validateId(id);
         var headers = extractHeaders(httpHeaders);
         String realBody = stegoClient.extractFromStegoJson(body);
         var response = proxyClient.proxyPutWithStego("/users/" + id, realBody, headers);
@@ -66,6 +71,7 @@ public class ProxyResource {
     @DELETE
     @Path("/users/{id}")
     public Response deleteUser(@PathParam("id") String id, @Context HttpHeaders httpHeaders) {
+        validateId(id);
         var headers = extractHeaders(httpHeaders);
         var response = proxyClient.proxyDeleteWithStego("/users/" + id, headers);
         return buildResponse(response);
@@ -84,6 +90,7 @@ public class ProxyResource {
 
     @GET
     @Path("/policies")
+    @com.securegate.api.security.RequiresPolicy(resource = "policies", action = "read")
     public Response getPolicies(@Context HttpHeaders httpHeaders) {
         var headers = extractHeaders(httpHeaders);
         var response = proxyClient.proxyGetWithStego("/policies", headers);
@@ -93,6 +100,7 @@ public class ProxyResource {
     @GET
     @Path("/policies/{id}")
     public Response getPolicyById(@PathParam("id") String id, @Context HttpHeaders httpHeaders) {
+        validateId(id);
         var headers = extractHeaders(httpHeaders);
         var response = proxyClient.proxyGetWithStego("/policies/" + id, headers);
         return buildResponse(response);
@@ -100,6 +108,7 @@ public class ProxyResource {
 
     @POST
     @Path("/policies")
+    @com.securegate.api.security.RequiresPolicy(resource = "policies", action = "create")
     public Response createPolicy(String body, @Context HttpHeaders httpHeaders) {
         var headers = extractHeaders(httpHeaders);
         String realBody = stegoClient.extractFromStegoJson(body);
@@ -110,6 +119,7 @@ public class ProxyResource {
     @PUT
     @Path("/policies/{id}")
     public Response updatePolicy(@PathParam("id") String id, String body, @Context HttpHeaders httpHeaders) {
+        validateId(id);
         var headers = extractHeaders(httpHeaders);
         String realBody = stegoClient.extractFromStegoJson(body);
         var response = proxyClient.proxyPutWithStego("/policies/" + id, realBody, headers);
@@ -119,6 +129,7 @@ public class ProxyResource {
     @DELETE
     @Path("/policies/{id}")
     public Response deletePolicy(@PathParam("id") String id, @Context HttpHeaders httpHeaders) {
+        validateId(id);
         var headers = extractHeaders(httpHeaders);
         var response = proxyClient.proxyDeleteWithStego("/policies/" + id, headers);
         return buildResponse(response);
@@ -137,6 +148,7 @@ public class ProxyResource {
 
     @GET
     @Path("/audit")
+    @com.securegate.api.security.RequiresPolicy(resource = "audit", action = "read")
     public Response getAuditLogs(@Context HttpHeaders httpHeaders) {
         var headers = extractHeaders(httpHeaders);
         var response = proxyClient.proxyGetWithStego("/audit", headers);
@@ -146,6 +158,7 @@ public class ProxyResource {
     @GET
     @Path("/audit/{id}")
     public Response getAuditLogById(@PathParam("id") String id, @Context HttpHeaders httpHeaders) {
+        validateId(id);
         var headers = extractHeaders(httpHeaders);
         var response = proxyClient.proxyGetWithStego("/audit/" + id, headers);
         return buildResponse(response);
@@ -205,6 +218,7 @@ public class ProxyResource {
 
     @GET
     @Path("/settings")
+    @com.securegate.api.security.RequiresPolicy(resource = "settings", action = "read")
     public Response getSettings(@Context HttpHeaders httpHeaders) {
         var headers = extractHeaders(httpHeaders);
         var response = proxyClient.proxyGetWithStego("/settings", headers);
@@ -221,6 +235,7 @@ public class ProxyResource {
 
     @PUT
     @Path("/settings/{key}")
+    @com.securegate.api.security.RequiresPolicy(resource = "settings", action = "update")
     public Response updateSetting(@PathParam("key") String key, String body, @Context HttpHeaders httpHeaders) {
         var headers = extractHeaders(httpHeaders);
         String realBody = stegoClient.extractFromStegoJson(body);
@@ -247,6 +262,12 @@ public class ProxyResource {
         var headers = extractHeaders(httpHeaders);
         var response = stegoProxyClient.proxyPost("/stego/extract", body, headers);
         return buildResponse(response);
+    }
+
+    private void validateId(String id) {
+        if (id == null || !id.matches("^[a-zA-Z0-9\\-]+$")) {
+            throw new BadRequestException("Invalid ID format");
+        }
     }
 
     // ============== HELPER METHODS ==============

@@ -1,0 +1,75 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml" xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:f="http://xmlns.jcp.org/jsf/core" xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:p="http://primefaces.org/ui" template="/WEB-INF/templates/template.xhtml">
+
+    <ui:define name="title">Security</ui:define>
+
+    <ui:define name="content">
+        <h1>Security Settings</h1>
+        <p style="color: #94a3b8; margin-bottom: 2rem;">Manage your multi-factor authentication and security parameters.
+        </p>
+
+        <p:panel header="Multi-Factor Authentication (MFA)" style="max-width: 600px;">
+            <p:messages id="messages" showDetail="true" closable="true" />
+
+            <h:panelGroup rendered="#{!userSession.mfaEnabled}">
+                <div style="text-align: center; background: #1e293b; padding: 2rem; border-radius: 8px;">
+                    <h3>Setup Mandatory MFA</h3>
+                    <p style="color: #94a3b8;">For your protection, MFA must be configured.</p>
+
+                    <h:form rendered="#{empty securitySettingsController.mfaSecret}">
+                        <p:commandButton value="Generate Secret &amp; QR Code"
+                            action="#{securitySettingsController.setupMfa}" update="@parent:@parent"
+                            styleClass="ui-button-primary" />
+                    </h:form>
+
+                    <h:panelGroup rendered="#{not empty securitySettingsController.mfaSecret}">
+                        <div
+                            style="background: white; width: 200px; height: 200px; margin: 1.5rem auto; display: flex; align-items: center; justify-content: center; border-radius: 4px;">
+                            <!-- In a real app, use a QR tag or library. For now, simple link/icon -->
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&amp;data=#{securitySettingsController.qrCodeUrl}"
+                                alt="QR Code" />
+                        </div>
+
+                        <div
+                            style="font-family: monospace; letter-spacing: 2px; font-size: 1.2rem; color: var(--accent-color); margin-bottom: 1.5rem;">
+                            #{securitySettingsController.mfaSecret}
+                        </div>
+
+                        <h:form>
+                            <div class="ui-fluid">
+                                <p:inputText value="#{securitySettingsController.verificationCode}"
+                                    placeholder="Enter 6-digit code" maxlength="6"
+                                    style="text-align: center; margin-bottom: 1rem;" />
+                                <p:commandButton value="Verify &amp; Enable"
+                                    action="#{securitySettingsController.verifyAndEnable}"
+                                    update="messages @parent:@parent:@parent" styleClass="ui-button-success" />
+                            </div>
+                        </h:form>
+                    </h:panelGroup>
+                </div>
+            </h:panelGroup>
+
+            <h:panelGroup rendered="#{userSession.mfaEnabled}">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem;">
+                    <div>
+                        <h3 style="margin: 0;">Status: <span style="color: #4ade80;">ACTIVE &amp; ENFORCED</span></h3>
+                        <p style="color: #94a3b8; margin-top: 0.5rem;">MFA is active for your account.</p>
+                    </div>
+                    <p:tag value="MANDATORY" severity="danger" />
+                </div>
+                <p:button value="Download Recovery Codes" styleClass="ui-button-outlined" icon="pi pi-download" />
+            </h:panelGroup>
+
+            <p:divider />
+
+            <h3>How to Test</h3>
+            <ol style="color: #94a3b8; line-height: 1.6;">
+                <li>Scan the QR code with Google Authenticator or Authy.</li>
+                <li>Enter the code to verify and link your device.</li>
+                <li>Once enabled, next time you login, the portal will demand a code.</li>
+            </ol>
+        </p:panel>
+    </ui:define>
+
+</ui:composition>

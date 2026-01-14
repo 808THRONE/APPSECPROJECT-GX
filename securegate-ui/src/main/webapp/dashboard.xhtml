@@ -1,0 +1,54 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml" xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:f="http://xmlns.jcp.org/jsf/core" xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:p="http://primefaces.org/ui" template="/WEB-INF/templates/template.xhtml">
+
+    <ui:define name="title">Dashboard</ui:define>
+
+    <ui:define name="content">
+        <div class="p-grid"
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+            <p:card style="background: var(--secondary-bg); border: 1px solid #334155;">
+                <f:facet name="title">Active Users</f:facet>
+                <div style="font-size: 2rem; font-weight: bold; color: #4ade80;">1,284</div>
+                <p style="color: #94a3b8;">+12% from last month</p>
+            </p:card>
+
+            <p:card style="background: var(--secondary-bg); border: 1px solid #334155;">
+                <f:facet name="title">API Calls (24h)</f:facet>
+                <div style="font-size: 2rem; font-weight: bold; color: #3b82f6;">45.2K</div>
+                <p style="color: #94a3b8;">Peak: 3.2K calls/hr</p>
+            </p:card>
+
+            <p:card style="background: var(--secondary-bg); border: 1px solid #334155;">
+                <f:facet name="title">Security Status</f:facet>
+                <div style="font-size: 2rem; font-weight: bold; color: #facc15;">Shield Active</div>
+                <p style="color: #94a3b8;">All systems operational</p>
+            </p:card>
+        </div>
+
+        <p:panel header="System Health Overview"
+            style="background: var(--secondary-bg) !important; border: 1px solid #334155 !important;">
+            <div
+                style="height: 300px; display: flex; align-items: center; justify-content: center; color: #94a3b8; border: 1px dashed #334155; border-radius: 8px;">
+                <div style="text-align: center;">
+                    <i class="pi pi-chart-line" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                    <p>Live Activity Monitoring Engine Ready</p>
+                </div>
+            </div>
+        </p:panel>
+
+        <p:panel header="API Integration Test"
+            style="margin-top: 2rem; background: var(--secondary-bg) !important; border: 1px solid #334155 !important;">
+            <h:form>
+                <p:commandButton value="Fetch User Profile via API" action="#{dashboardController.callUserInfoApi}"
+                    update="apiResult" styleClass="ui-button-info" icon="pi pi-cloud-download" />
+                <h:panelGroup id="apiResult" layout="block"
+                    style="margin-top: 1rem; padding: 1rem; background: #0f172a; border-radius: 4px; color: #4ade80; font-family: monospace; border: 1px solid #334155;">
+                    #{dashboardController.apiResponse != null ? dashboardController.apiResponse : 'Waiting for API
+                    call...'}
+                </h:panelGroup>
+            </h:form>
+        </p:panel>
+    </ui:define>
+
+</ui:composition>

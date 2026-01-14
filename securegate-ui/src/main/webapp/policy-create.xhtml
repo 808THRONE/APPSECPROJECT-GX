@@ -1,0 +1,91 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml" xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:f="http://xmlns.jcp.org/jsf/core" xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:p="http://primefaces.org/ui" template="/WEB-INF/templates/template.xhtml">
+
+    <ui:define name="title">Create Policy</ui:define>
+
+    <ui:define name="content">
+        <h:form rendered="#{userSession.admin}">
+            <p:panel header="New Security Policy"
+                style="max-width: 800px; margin: 0 auto; background: var(--secondary-bg) !important;">
+                <p:messages id="messages" showDetail="true" closable="true" />
+
+                <div class="ui-fluid">
+                    <div class="field" style="margin-bottom: 1.5rem;">
+                        <p:outputLabel for="name" value="Policy Name" />
+                        <p:inputText id="name" value="#{policyController.newPolicy.name}" required="true"
+                            placeholder="e.g. Deny User Deletion" />
+                    </div>
+
+                    <div class="field" style="margin-bottom: 1.5rem;">
+                        <p:outputLabel for="description" value="Description" />
+                        <p:inputTextarea id="description" value="#{policyController.newPolicy.description}" rows="3" />
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 1.5rem;">
+                        <div class="field">
+                            <p:outputLabel for="resource" value="Resource Name (* for all)" />
+                            <p:inputText id="resource" value="#{policyController.newPolicy.resource}" required="true" />
+                        </div>
+                        <div class="field">
+                            <p:outputLabel for="action" value="Action (* for all)" />
+                            <p:inputText id="action" value="#{policyController.newPolicy.action}" required="true" />
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 1.5rem;">
+                        <div class="field">
+                            <p:outputLabel for="effect" value="Effect" />
+                            <p:selectOneMenu id="effect" value="#{policyController.newPolicy.effect}">
+                                <f:selectItem itemLabel="ALLOW" itemValue="ALLOW" />
+                                <f:selectItem itemLabel="DENY" itemValue="DENY" />
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="field">
+                            <p:outputLabel for="risk" value="Risk Level" />
+                            <p:selectOneMenu id="risk" value="#{policyController.newPolicy.riskLevel}">
+                                <f:selectItem itemLabel="LOW" itemValue="LOW" />
+                                <f:selectItem itemLabel="MEDIUM" itemValue="MEDIUM" />
+                                <f:selectItem itemLabel="HIGH" itemValue="HIGH" />
+                                <f:selectItem itemLabel="CRITICAL" itemValue="CRITICAL" />
+                            </p:selectOneMenu>
+                        </div>
+                    </div>
+
+                    <div class="field" style="margin-bottom: 1.5rem;">
+                        <p:outputLabel for="priority" value="Priority (Lower is higher precedence)" />
+                        <p:selectOneMenu id="priority" value="#{policyController.newPolicy.priority}">
+                            <f:selectItem itemLabel="1 (Highest)" itemValue="1" />
+                            <f:selectItem itemLabel="10 (Default)" itemValue="10" />
+                            <f:selectItem itemLabel="100 (Low)" itemValue="100" />
+                        </p:selectOneMenu>
+                    </div>
+
+                    <div class="field" style="margin-bottom: 2rem;">
+                        <p:outputLabel for="conditions" value="Conditions (ABAC Syntax: role=NAME)" />
+                        <p:inputText id="conditions" value="#{policyController.newPolicy.conditions}"
+                            placeholder="e.g. role=ADMIN" />
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                        <p:button value="Cancel" outcome="policies" styleClass="ui-button-secondary" />
+                        <p:commandButton value="Create Policy" action="#{policyController.savePolicy}" update="messages"
+                            styleClass="ui-button-success" icon="pi pi-check" />
+                    </div>
+                </div>
+            </p:panel>
+        </h:form>
+
+        <h:panelGroup rendered="#{!userSession.admin}" styleClass="ui-messages ui-widget" layout="block">
+            <div class="ui-messages-error ui-corner-all">
+                <span class="ui-messages-error-icon"></span>
+                <ul>
+                    <li><span class="ui-messages-error-summary">Access Denied:</span>
+                        <span class="ui-messages-error-detail">Only administrators can access this page.</span>
+                    </li>
+                </ul>
+            </div>
+        </h:panelGroup>
+    </ui:define>
+
+</ui:composition>

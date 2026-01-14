@@ -1,0 +1,50 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml" xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:f="http://xmlns.jcp.org/jsf/core" xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:p="http://primefaces.org/ui" template="/WEB-INF/templates/template.xhtml">
+
+    <ui:define name="title">Notifications</ui:define>
+
+    <ui:define name="content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h1>Notifications</h1>
+            <p:commandButton value="Mark All as Read" icon="pi pi-check-circle" styleClass="ui-button-outlined" />
+        </div>
+
+        <p:panel style="background: var(--secondary-bg) !important;">
+            <div style="padding: 1rem;">
+                <div
+                    style="border-left: 4px solid #3b82f6; padding: 1rem; background: #0f172a; margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;">
+                    <i class="pi pi-info-circle" style="color: #3b82f6; font-size: 1.5rem;"></i>
+                    <div>
+                        <div style="font-weight: bold;">System Update: Phase 2 Deployed</div>
+                        <div style="color: #94a3b8; font-size: 0.9rem;">Jakarta Faces migration success. RBAC/ABAC
+                            engine active.</div>
+                    </div>
+                    <span style="margin-left: auto; color: #64748b; font-size: 0.8rem;">2h ago</span>
+                </div>
+
+                <div
+                    style="border-left: 4px solid #ef4444; padding: 1rem; background: #0f172a; margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;">
+                    <i class="pi pi-exclamation-triangle" style="color: #ef4444; font-size: 1.5rem;"></i>
+                    <div>
+                        <div style="font-weight: bold;">Security Alert: MFA Enforcement</div>
+                        <div style="color: #94a3b8; font-size: 0.9rem;">Multi-Factor Authentication is now mandatory for
+                            all users.</div>
+                    </div>
+                    <span style="margin-left: auto; color: #64748b; font-size: 0.8rem;">Just now</span>
+                </div>
+
+                <div
+                    style="border-left: 4px solid #4ade80; padding: 1rem; background: #0f172a; display: flex; align-items: center; gap: 1rem;">
+                    <i class="pi pi-user" style="color: #4ade80; font-size: 1.5rem;"></i>
+                    <div>
+                        <div style="font-weight: bold;">Login Successful</div>
+                        <div style="color: #94a3b8; font-size: 0.9rem;">Access granted from localhost:8080.</div>
+                    </div>
+                    <span style="margin-left: auto; color: #64748b; font-size: 0.8rem;">5m ago</span>
+                </div>
+            </div>
+        </p:panel>
+    </ui:define>
+
+</ui:composition>

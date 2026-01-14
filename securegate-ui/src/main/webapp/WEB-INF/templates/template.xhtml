@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:f="http://xmlns.jcp.org/jsf/core" xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:p="http://primefaces.org/ui">
+
+<h:head>
+    <title>SecureGate | <ui:insert name="title">Portal</ui:insert>
+    </title>
+    <h:outputStylesheet name="css/layout.css" />
+    <style>
+        :root {
+            --primary-bg: #0f172a;
+            --secondary-bg: #1e293b;
+            --accent-color: #3b82f6;
+            --text-color: #f8fafc;
+            --sidebar-width: 260px;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--secondary-bg);
+            border-right: 1px solid #334155;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+        }
+
+        .sidebar-header {
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 1px solid #334155;
+        }
+
+        .sidebar-header h2 {
+            margin: 0;
+            color: var(--accent-color);
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+        }
+
+        .nav-menu {
+            flex: 1;
+            padding: 1rem 0;
+        }
+
+        .nav-item {
+            padding: 0.75rem 2rem;
+            display: flex;
+            align-items: center;
+            color: #94a3b8;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            color: var(--text-color);
+            background-color: #334155;
+        }
+
+        .nav-item.active {
+            color: var(--accent-color);
+            background-color: #334155;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .nav-item i {
+            margin-right: 1rem;
+            width: 20px;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .topbar {
+            height: 64px;
+            background-color: var(--secondary-bg);
+            border-bottom: 1px solid #334155;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 0 2rem;
+        }
+
+        .content-area {
+            padding: 2rem;
+            flex: 1;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logout-btn {
+            background: none;
+            border: 1px solid #ef4444;
+            color: #ef4444;
+            padding: 0.4rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: #ef4444;
+            color: white;
+        }
+    </style>
+</h:head>
+
+<h:body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>SECUREGATE</h2>
+        </div>
+        <div class="nav-menu">
+            <h:link outcome="dashboard" styleClass="nav-item #{view.viewId.contains('dashboard') ? 'active' : ''}">
+                <i class="pi pi-home"></i> Dashboard
+            </h:link>
+            <h:link outcome="policies" styleClass="nav-item #{view.viewId.contains('policies') ? 'active' : ''}">
+                <i class="pi pi-shield"></i> Policies
+            </h:link>
+            <h:link outcome="notifications"
+                styleClass="nav-item #{view.viewId.contains('notifications') ? 'active' : ''}">
+                <i class="pi pi-bell"></i> Notifications
+            </h:link>
+            <h:link outcome="stego" styleClass="nav-item #{view.viewId.contains('stego') ? 'active' : ''}">
+                <i class="pi pi-lock"></i> Stego Center
+            </h:link>
+            <h:link outcome="mfa" styleClass="nav-item #{view.viewId.contains('mfa') ? 'active' : ''}">
+                <i class="pi pi-key"></i> Security Settings
+            </h:link>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="topbar">
+            <div class="user-profile">
+                <span style="color: #94a3b8;">Welcome, </span>
+                <span style="font-weight: bold; color: var(--accent-color);">#{userSession.username}</span>
+                <h:form>
+                    <p:commandLink action="#{authController.logout}" styleClass="logout-btn" value="Logout" />
+                </h:form>
+            </div>
+        </div>
+
+        <div class="content-area">
+            <ui:insert name="content">
+                <!-- Page content goes here -->
+            </ui:insert>
+        </div>
+    </div>
+</h:body>
+
+</html>

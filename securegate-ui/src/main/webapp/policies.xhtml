@@ -1,0 +1,39 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml" xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:f="http://xmlns.jcp.org/jsf/core" xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:p="http://primefaces.org/ui" template="/WEB-INF/templates/template.xhtml">
+
+    <ui:define name="title">Policies</ui:define>
+
+    <ui:define name="content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h1>Security Policies</h1>
+            <p:button outcome="policy-create" value="Create Policy" icon="pi pi-plus" rendered="#{userSession.admin}"
+                styleClass="ui-button-success" />
+        </div>
+
+        <p:dataTable value="#{policyController.policies}" var="policy" styleClass="ui-datatable-striped"
+            emptyMessage="No policies found.">
+            <p:column headerText="Name" sortBy="#{policy.name}">
+                <h:outputText value="#{policy.name}" style="font-weight: bold; color: var(--accent-color);" />
+            </p:column>
+            <p:column headerText="Resource">
+                <p:tag value="#{policy.resource}" severity="info" />
+            </p:column>
+            <p:column headerText="Action">
+                <h:outputText value="#{policy.action}" />
+            </p:column>
+            <p:column headerText="Effect">
+                <p:tag value="#{policy.effect}" severity="#{policy.effect == 'ALLOW' ? 'success' : 'danger'}" />
+            </p:column>
+            <p:column headerText="Risk Level">
+                <p:tag value="#{policy.riskLevel}"
+                    severity="#{policy.riskLevel == 'CRITICAL' ? 'danger' : (policy.riskLevel == 'HIGH' ? 'warning' : 'info')}" />
+            </p:column>
+            <p:column headerText="Status">
+                <h:outputText value="#{policy.active ? 'Active' : 'Inactive'}"
+                    style="color: #{policy.active ? '#4ade80' : '#94a3b8'}" />
+            </p:column>
+        </p:dataTable>
+    </ui:define>
+
+</ui:composition>

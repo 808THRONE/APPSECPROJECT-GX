@@ -28,15 +28,11 @@ public class PdpService {
      */
     public boolean evaluate(User user, String resource, String action, Map<String, Object> context) {
 
-        // 1. Super admin always allowed (Implicit Policy or keep hardcoded safety)
-        if (user.getRoles().stream().anyMatch(r -> r.getRoleName().equals("ADMIN"))) {
-            return true;
-        }
+        // 1. Initial Evaluation Status
+        boolean permit = false;
 
         // 2. Fetch all policies (In prod, filter by active & resource/action in SQL)
         List<Policy> allPolicies = policyRepository.findAll();
-
-        boolean permit = false;
 
         for (Policy policy : allPolicies) {
             if (!policy.isActive())

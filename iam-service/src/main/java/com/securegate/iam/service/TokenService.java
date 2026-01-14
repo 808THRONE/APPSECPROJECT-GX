@@ -60,20 +60,36 @@ public class TokenService {
                     .jwtID(jti)
                     .build();
 
-            // Use RS256 and include KID
-            JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.RS256)
+            // Use EdDSA and include KID
+            JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.EdDSA)
                     .keyID(keyService.getKeyId())
                     .type(JOSEObjectType.JWT)
                     .build();
 
             SignedJWT signedJWT = new SignedJWT(header, claims);
 
-            JWSSigner signer = new com.nimbusds.jose.crypto.RSASSASigner(keyService.getPrivateKey());
+            // Convert Java Key to Nimbus OctetKeyPair for signing
+            // Extract the raw public key point (x) from X.509 encoding (last 32 bytes)
+            byte[] pubEncoded = keyService.getPublicKey().getEncoded();
+            byte[] x = java.util.Arrays.copyOfRange(pubEncoded, pubEncoded.length - 32, pubEncoded.length);
+
+            // Extract the raw private key seed (d) from PKCS#8 encoding (last 32 bytes)
+            // For Ed25519, the last 32 bytes of the PKCS#8 encoded private key is the seed.
+            byte[] privEncoded = keyService.getPrivateKey().getEncoded();
+            byte[] d = java.util.Arrays.copyOfRange(privEncoded, privEncoded.length - 32, privEncoded.length);
+
+            com.nimbusds.jose.jwk.OctetKeyPair jwk = new com.nimbusds.jose.jwk.OctetKeyPair.Builder(
+                    com.nimbusds.jose.jwk.Curve.Ed25519,
+                    com.nimbusds.jose.util.Base64URL.encode(x))
+                    .d(com.nimbusds.jose.util.Base64URL.encode(d))
+                    .build();
+
+            JWSSigner signer = new com.nimbusds.jose.crypto.Ed25519Signer(jwk);
             signedJWT.sign(signer);
             return signedJWT.serialize();
 
         } catch (JOSEException e) {
-            throw new RuntimeException("Error signing token with RS256", e);
+            throw new RuntimeException("Error signing token with EdDSA", e);
         }
     }
 }

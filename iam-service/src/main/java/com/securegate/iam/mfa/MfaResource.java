@@ -1,12 +1,12 @@
 package com.securegate.iam.mfa;
 
+import com.securegate.iam.service.TotpService;
 import com.securegate.iam.model.User;
 import com.securegate.iam.repository.UserRepository;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import java.util.Base64;
 
 @Path("/mfa")
 public class MfaResource {
@@ -25,29 +25,39 @@ public class MfaResource {
     @Path("/setup")
     @Produces(MediaType.APPLICATION_JSON)
     public Response setupMfa(@FormParam("userId") String userId) {
-        // Generate Secret
-        byte[] secret = totpService.generateSecret();
-        String secretBase32 = Base64.getEncoder().encodeToString(secret); // Should use Base32
+        User user = userRepository.findById(java.util.UUID.fromString(userId))
+                .orElseThrow(() -> new NotFoundException("User not found"));
 
-        // Save to User (in production encrypt this!)
-        // User user = userRepository.findById(...);
-        // user.setMfaSecretEnc(secretBase32);
-        // userRepository.save(user);
+        // Generate Secret (Library based)
+        String secretBase32 = totpService.generateSecret();
 
-        return Response.ok("{\"secret\":\"" + secretBase32 + "\", \"qr\":\"otpauth://totp/SecureGate?secret="
-                + secretBase32 + "\"}").build();
+        // Save to User
+        user.setMfaSecretEnc(secretBase32);
+        userRepository.save(user);
+
+        return Response.ok("{\"secret\":\"" + secretBase32 + "\", \"qr\":\""
+                + totpService.getQrCodeUrl(user.getUsername(), secretBase32) + "\"}").build();
     }
 
     @POST
     @Path("/verify")
     public Response verifyMfa(@FormParam("userId") String userId, @FormParam("code") int code) {
-        // Fetch User and Secret
-        // String secretStr = user.getMfaSecretEnc();
-        // byte[] secret = Base64.getDecoder().decode(secretStr);
+        User user = userRepository.findById(java.util.UUID.fromString(userId))
+                .orElseThrow(() -> new NotFoundException("User not found"));
 
-        // boolean valid = totpService.verifyCode(secret, code);
-        // if (valid) user.setMfaEnabled(true);
+        String secretStr = user.getMfaSecretEnc();
+        if (secretStr == null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("MFA not set up").build();
+        }
 
-        return Response.ok("{\"valid\":true}").build();
+        boolean valid = totpService.verifyCode(secretStr, code);
+
+        if (valid) {
+            user.setMfaEnabled(true);
+            userRepository.save(user);
+            return Response.ok("{\"valid\":true}").build();
+        } else {
+            return Response.status(Response.Status.UNAUTHORIZED).entity("{\"valid\":false}").build();
+        }
     }
 }
