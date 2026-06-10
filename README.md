@@ -14,7 +14,7 @@ A comprehensive identity and access management system featuring:
 - **Zero Trust Security** - Continuous verification with no implicit trust
 - **OAuth 2.1 + PASETO v4** - Modern authentication with algorithm confusion protection
 - **ABAC Policy Engine** - Attribute-Based Access Control with visual policy builder
-- **AES-256-GCM + I forgot which dissimulation algorithm ** - Covert data transmission
+- **XChaCha20-Poly1305 + DWT Steganography** - Robust and secure covert data transmission
 - **Progressive Web App** - Offline-first with service worker
 - **Multi-Factor Authentication** - TOTP-based 2FA with QR enrollment
 - **Real-time Audit Logging** - WebSocket-based security event streaming
@@ -289,7 +289,7 @@ npm run preview
 - [ ] OAuth 2.1 authorization server
 - [ ] PASETO v4 token service
 - [ ] TOTP 2FA enrollment
-- [ ] User realm with bcrypt
+- [ ] User realm with Argon2id
 - [ ] Rate limiting
 
 ###  Phase 3: API Gateway & ABAC
@@ -299,8 +299,8 @@ npm run preview
 - [ ] mTLS iam ↔ api
 
 ###  Phase 4: Steganography Module
-- [ ] AES-256-GCM encryption
-- [ ] LSB-DCT steganography (OpenCV)
+- [ ] XChaCha20-Poly1305 encryption
+- [ ] DWT (Discrete Wavelet Transform) steganography (OpenCV)
 - [ ] MinIO integration
 - [ ] PSNR validation (≥45dB)
 
