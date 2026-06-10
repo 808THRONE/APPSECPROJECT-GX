@@ -62,7 +62,7 @@ CREATE INDEX idx_policies_effect ON abac_policies(effect);
 -- TODO: Configure RLS policies for multi-tenancy
 
 -- Insert demo user (password: 'SecurePassword123!')
--- Bcrypt hash with cost factor 12
+-- Argon2id hash (memory=65536, iterations=2, parallelism=1)
 INSERT INTO users (email, name, department, role, clearance_level, password_hash)
 VALUES (
     'admin@securegate.com',
@@ -70,7 +70,7 @@ VALUES (
     'Security Operations',
     'Security Administrator',
     5,
-    '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY8MCEjPcNiWqGy'
+    '$argon2id$v=19$m=65536,t=2,p=1$V86G0h43JZfWeciUlKk8bw$yeSMMezI5Yic2pglTUrCRJXR9Ns+SQiBXfRmakntPB8'
 ) ON CONFLICT (email) DO NOTHING;
 
 -- Insert demo ABAC policy
@@ -83,7 +83,7 @@ VALUES (
     '{"time": {"start": "09:00", "end": "18:00"}, "location": {"countries": ["US", "CA"]}}'::jsonb
 ) ON CONFLICT (policy_id) DO NOTHING;
 
-COMMENT ON TABLE users IS 'User accounts with bcrypt password hashing';
+COMMENT ON TABLE users IS 'User accounts with Argon2id password hashing';
 COMMENT ON TABLE abac_policies IS 'Attribute-Based Access Control policies stored as JSONB';
 COMMENT ON TABLE audit_logs IS 'Security event audit trail';
 COMMENT ON TABLE totp_secrets IS 'TOTP 2FA secrets (encrypted)';

@@ -1,18 +1,18 @@
 # Steganography Module
 
 ## Overview
-AES-256-GCM encryption combined with LSB-DCT steganography for covert data transmission.
+XChaCha20-Poly1305 encryption combined with DWT (Discrete Wavelet Transform) steganography for robust, covert data transmission.
 
 ## Technology Stack
-- Bouncy Castle 1.77 (AES-256-GCM)
-- OpenCV 4.8.x Java bindings (LSB-DCT)
+- Bouncy Castle 1.77 (XChaCha20-Poly1305)
+- OpenCV 4.8.x Java bindings (DWT)
 - MinIO (Cover image storage)
 
 ## Structure
 ```
 src/main/java/com/securegate/stego/
-├── AesGcmEncryptionService.java    # AES-256-GCM with PBKDF2
-├── LsbDctStegoEngine.java          # LSB-DCT implementation
+├── XChaCha20Poly1305Service.java   # XChaCha20-Poly1305 with Argon2id KDF
+├── DwtStegoEngine.java             # DWT steganography implementation
 ├── CoverImageService.java          # MinIO integration
 └── SteganographyAPI.java           # REST endpoints
 ```
@@ -23,5 +23,5 @@ src/main/java/com/securegate/stego/
 ## Quality Metrics
 - **PSNR**: ≥45dB (imperceptibility)
 - **MSE**: <0.5
-- **Robustness**: JPEG Q≥85
-- **Capacity**: 12.5% of cover image size
+- **Robustness**: JPEG Q≥85, resistant to filtering
+- **Capacity**: Balanced against DWT sub-bands
