@@ -4,35 +4,35 @@
 
 :root {
   /* === Color Palette === */
-  /* Dark Base */
-  --color-bg-primary: #0f172a;
-  --color-bg-secondary: #1e293b;
-  --color-bg-tertiary: #334155;
-  --color-bg-elevated: rgba(30, 41, 59, 0.8);
+  /* Dark Base - Cyber Security Theme */
+  --color-bg-primary: #07090f;
+  --color-bg-secondary: #0f121d;
+  --color-bg-tertiary: #171b2b;
+  --color-bg-elevated: rgba(15, 18, 29, 0.85);
   
-  /* Vibrant Accents */
-  --color-primary: hsl(217, 91%, 60%);
-  --color-primary-dark: hsl(217, 91%, 50%);
-  --color-primary-light: hsl(217, 91%, 70%);
+  /* Vibrant Accents - Emerald & Cyan */
+  --color-primary: #00f0ff;
+  --color-primary-dark: #00b3cc;
+  --color-primary-light: #66f5ff;
   
-  --color-secondary: hsl(280, 75%, 60%);
-  --color-secondary-dark: hsl(280, 75%, 50%);
-  --color-secondary-light: hsl(280, 75%, 70%);
+  --color-secondary: #00ffa3;
+  --color-secondary-dark: #00cc82;
+  --color-secondary-light: #66ffc8;
   
-  --color-accent: hsl(160, 84%, 39%);
-  --color-accent-dark: hsl(160, 84%, 29%);
-  --color-accent-light: hsl(160, 84%, 49%);
+  --color-accent: #7000ff;
+  --color-accent-dark: #5200cc;
+  --color-accent-light: #994dff;
   
   /* Gradients */
   --gradient-primary: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
-  --gradient-secondary: linear-gradient(135deg, var(--color-accent) 0%, var(--color-primary) 100%);
-  --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  --gradient-secondary: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-accent) 100%);
+  --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
   
   /* Text Colors */
-  --color-text-primary: #f8fafc;
-  --color-text-secondary: #cbd5e1;
-  --color-text-tertiary: #94a3b8;
-  --color-text-muted: #64748b;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #a1a1aa;
+  --color-text-tertiary: #71717a;
+  --color-text-muted: #52525b;
   
   /* Semantic Colors */
   --color-success: hsl(142, 76%, 36%);
@@ -84,17 +84,17 @@
   --radius-full: 9999px;
   
   /* === Shadows === */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
-  --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.5);
-  --shadow-glow-accent: 0 0 30px rgba(5, 150, 105, 0.6);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.6), 0 2px 4px -1px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.7), 0 4px 6px -2px rgba(0, 0, 0, 0.6);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.8), 0 10px 10px -5px rgba(0, 0, 0, 0.7);
+  --shadow-glow: 0 0 25px rgba(0, 240, 255, 0.3);
+  --shadow-glow-accent: 0 0 30px rgba(0, 255, 163, 0.3);
   
   /* === Glassmorphism === */
-  --glass-bg: rgba(30, 41, 59, 0.6);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-blur: blur(12px);
+  --glass-bg: rgba(15, 18, 29, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-blur: blur(16px);
   
   /* === Transitions === */
   --transition-fast: 150ms ease-in-out;

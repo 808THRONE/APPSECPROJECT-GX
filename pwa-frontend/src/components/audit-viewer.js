@@ -41,13 +41,17 @@ export class AuditViewer extends LitElement {
     }
 
     .connection-status.connected {
-      background: rgba(34, 197, 94, 0.2);
       color: var(--color-success);
+      background: linear-gradient(90deg, rgba(0, 255, 163, 0.1) 0%, transparent 100%);
+      border: 1px solid rgba(0, 255, 163, 0.2);
+      letter-spacing: 0.05em;
     }
 
     .connection-status.disconnected {
-      background: rgba(239, 68, 68, 0.2);
       color: var(--color-error);
+      background: linear-gradient(90deg, rgba(255, 0, 0, 0.1) 0%, transparent 100%);
+      border: 1px solid rgba(255, 0, 0, 0.2);
+      letter-spacing: 0.05em;
     }
 
     .status-indicator {
@@ -88,6 +92,14 @@ export class AuditViewer extends LitElement {
       font-family: var(--font-mono);
       font-size: var(--font-size-sm);
       animation: fadeInUp 0.3s ease-out;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: var(--radius-lg);
+      transition: all var(--transition-base);
+    }
+
+    .log-card:hover {
+      border-color: rgba(0, 240, 255, 0.2);
     }
 
     .log-header {
@@ -101,27 +113,32 @@ export class AuditViewer extends LitElement {
       padding: var(--space-xs) var(--space-sm);
       border-radius: var(--radius-sm);
       font-size: var(--font-size-xs);
-      font-weight: var(--font-weight-semibold);
+      font-weight: var(--font-weight-bold);
       text-transform: uppercase;
+      letter-spacing: 0.1em;
     }
 
     .log-type.auth {
-      background: rgba(59, 130, 246, 0.2);
+      background: rgba(0, 240, 255, 0.1);
+      border: 1px solid rgba(0, 240, 255, 0.2);
       color: var(--color-primary);
     }
 
     .log-type.access {
-      background: rgba(34, 197, 94, 0.2);
+      background: rgba(0, 255, 163, 0.1);
+      border: 1px solid rgba(0, 255, 163, 0.2);
       color: var(--color-success);
     }
 
     .log-type.error {
-      background: rgba(239, 68, 68, 0.2);
+      background: rgba(255, 0, 0, 0.1);
+      border: 1px solid rgba(255, 0, 0, 0.2);
       color: var(--color-error);
     }
 
     .log-type.security {
-      background: rgba(249, 115, 22, 0.2);
+      background: rgba(255, 170, 0, 0.1);
+      border: 1px solid rgba(255, 170, 0, 0.2);
       color: var(--color-warning);
     }
 

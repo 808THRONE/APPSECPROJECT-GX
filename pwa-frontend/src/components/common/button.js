@@ -42,8 +42,11 @@ export class SgButton extends LitElement {
     /* Variants */
     .primary {
       background: var(--gradient-primary);
-      color: var(--color-text-primary);
+      color: var(--color-bg-primary);
       box-shadow: var(--shadow-md);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: var(--font-weight-bold);
     }
 
     .primary:hover:not(:disabled) {
@@ -52,9 +55,11 @@ export class SgButton extends LitElement {
     }
 
     .secondary {
-      background: transparent;
+      background: rgba(0, 240, 255, 0.1);
       color: var(--color-primary);
-      border: 2px solid var(--color-primary);
+      border: 1px solid var(--color-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
     }
 
     .secondary:hover:not(:disabled) {

@@ -42,6 +42,13 @@ export class PolicyBuilder extends LitElement {
       padding: var(--space-xl);
       cursor: pointer;
       transition: all var(--transition-base);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: var(--radius-lg);
+    }
+
+    .policy-card:hover {
+      border-color: rgba(0, 240, 255, 0.2);
     }
 
     .policy-header {
@@ -69,13 +76,17 @@ export class PolicyBuilder extends LitElement {
     }
 
     .policy-effect.permit {
-      background: rgba(34, 197, 94, 0.2);
       color: var(--color-success);
+      background: linear-gradient(90deg, rgba(0, 255, 163, 0.1) 0%, transparent 100%);
+      border: 1px solid rgba(0, 255, 163, 0.2);
+      letter-spacing: 0.1em;
     }
 
     .policy-effect.deny {
-      background: rgba(239, 68, 68, 0.2);
       color: var(--color-error);
+      background: linear-gradient(90deg, rgba(255, 0, 0, 0.1) 0%, transparent 100%);
+      border: 1px solid rgba(255, 0, 0, 0.2);
+      letter-spacing: 0.1em;
     }
 
     .policy-details {
@@ -101,11 +112,12 @@ export class PolicyBuilder extends LitElement {
     }
 
     .policy-tag {
-      background: var(--color-bg-tertiary);
+      background: rgba(0, 240, 255, 0.05);
+      border: 1px solid rgba(0, 240, 255, 0.2);
       padding: var(--space-xs) var(--space-sm);
       border-radius: var(--radius-sm);
       font-size: var(--font-size-xs);
-      color: var(--color-text-secondary);
+      color: var(--color-primary);
     }
 
     .empty-state {

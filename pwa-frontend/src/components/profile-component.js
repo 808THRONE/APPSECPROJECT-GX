@@ -43,9 +43,10 @@ export class ProfileComponent extends LitElement {
       align-items: center;
       justify-content: center;
       font-size: var(--font-size-4xl);
-      font-weight: var(--font-weight-bold);
-      color: white;
+      font-weight: var(--font-weight-extrabold);
+      color: var(--color-bg-primary);
       box-shadow: var(--shadow-glow);
+      border: 2px solid rgba(0, 240, 255, 0.5);
     }
 
     .user-info h2 {
@@ -115,13 +116,19 @@ export class ProfileComponent extends LitElement {
     }
 
     .mfa-status.enabled {
-      background: rgba(34, 197, 94, 0.2);
       color: var(--color-success);
+      background: linear-gradient(90deg, rgba(0, 255, 163, 0.1) 0%, transparent 100%);
+      border: 1px solid rgba(0, 255, 163, 0.2);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
     }
 
     .mfa-status.disabled {
-      background: rgba(239, 68, 68, 0.2);
       color: var(--color-error);
+      background: linear-gradient(90deg, rgba(255, 0, 0, 0.1) 0%, transparent 100%);
+      border: 1px solid rgba(255, 0, 0, 0.2);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
     }
 
     .qr-code {
@@ -138,12 +145,14 @@ export class ProfileComponent extends LitElement {
     }
 
     .recovery-codes {
-      background: var(--color-bg-tertiary);
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       padding: var(--space-lg);
       border-radius: var(--radius-md);
       font-family: var(--font-mono);
       font-size: var(--font-size-sm);
       margin: var(--space-lg) 0;
+      color: var(--color-primary);
     }
 
     .recovery-code {

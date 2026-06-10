@@ -36,39 +36,47 @@ class SecureGateApp extends LitElement {
       backdrop-filter: var(--glass-blur);
       -webkit-backdrop-filter: var(--glass-blur);
       border-right: 1px solid var(--glass-border);
-      padding: var(--space-xl);
+      padding: var(--space-xl) var(--space-lg);
       display: flex;
       flex-direction: column;
-      gap: var(--space-lg);
+      gap: var(--space-2xl);
       position: fixed;
       height: 100vh;
       overflow-y: auto;
+      box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
     }
 
     .logo {
       display: flex;
       align-items: center;
       gap: var(--space-md);
-      padding: var(--space-md);
-      margin-bottom: var(--space-lg);
+      padding: 0 var(--space-sm);
     }
 
     .logo-icon {
-      width: 40px;
-      height: 40px;
+      width: 44px;
+      height: 44px;
       background: var(--gradient-primary);
-      border-radius: var(--radius-lg);
+      border-radius: var(--radius-md);
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: var(--font-size-xl);
+      box-shadow: var(--shadow-glow);
+      border: 1px solid rgba(255,255,255,0.2);
     }
 
     .logo-text {
       font-family: var(--font-display);
       font-size: var(--font-size-xl);
-      font-weight: var(--font-weight-bold);
+      font-weight: var(--font-weight-extrabold);
       color: var(--color-text-primary);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .logo-text span {
+      color: var(--color-primary);
     }
 
     .nav {
@@ -81,32 +89,68 @@ class SecureGateApp extends LitElement {
       display: flex;
       align-items: center;
       gap: var(--space-md);
-      padding: var(--space-md);
-      border-radius: var(--radius-lg);
+      padding: var(--space-md) var(--space-lg);
+      border-radius: var(--radius-md);
       color: var(--color-text-secondary);
       cursor: pointer;
-      transition: all var(--transition-fast);
-      font-weight: var(--font-weight-medium);
+      transition: all var(--transition-base);
+      font-weight: var(--font-weight-semibold);
+      letter-spacing: 0.02em;
+      border: 1px solid transparent;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .nav-item::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 4px; height: 100%;
+      background: var(--color-primary);
+      opacity: 0;
+      transition: opacity var(--transition-base);
     }
 
     .nav-item:hover {
-      background: var(--color-bg-tertiary);
+      background: rgba(255, 255, 255, 0.03);
       color: var(--color-text-primary);
+      border-color: rgba(255, 255, 255, 0.05);
     }
 
     .nav-item.active {
-      background: var(--gradient-primary);
-      color: var(--color-text-primary);
-      box-shadow: var(--shadow-glow);
+      background: linear-gradient(90deg, rgba(0, 240, 255, 0.1) 0%, transparent 100%);
+      color: var(--color-primary);
+      border-color: rgba(0, 240, 255, 0.2);
+      box-shadow: inset 2px 0 10px rgba(0, 240, 255, 0.05);
+    }
+
+    .nav-item.active::before {
+      opacity: 1;
+      box-shadow: 0 0 10px var(--color-primary);
     }
 
     .nav-icon {
-      font-size: var(--font-size-xl);
+      font-size: var(--font-size-lg);
+      opacity: 0.8;
+      transition: opacity var(--transition-base), transform var(--transition-base);
+    }
+
+    .nav-item:hover .nav-icon {
+      opacity: 1;
+      transform: scale(1.1);
+    }
+
+    .nav-item.active .nav-icon {
+      opacity: 1;
+      color: var(--color-primary);
+      filter: drop-shadow(0 0 5px var(--color-primary));
     }
 
     .main-content {
       flex: 1;
       margin-left: var(--sidebar-width);
+      padding: var(--space-xl);
+      background: radial-gradient(circle at top right, rgba(0, 240, 255, 0.03), transparent 40%);
+      min-height: 100vh;
     }
 
     @media (max-width: 768px) {
@@ -233,8 +277,8 @@ class SecureGateApp extends LitElement {
       <div class="app-container">
         <nav class="sidebar">
           <div class="logo">
-            <div class="logo-icon">🔐</div>
-            <div class="logo-text">SecureGate</div>
+            <div class="logo-icon">🛡️</div>
+            <div class="logo-text">Secure<span>Gate</span></div>
           </div>
 
           <div class="nav">

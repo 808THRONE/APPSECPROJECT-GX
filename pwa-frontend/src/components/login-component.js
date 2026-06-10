@@ -36,26 +36,28 @@ export class LoginComponent extends LitElement {
       width: 80px;
       height: 80px;
       background: var(--gradient-primary);
-      border-radius: var(--radius-xl);
+      border-radius: var(--radius-lg);
       display: flex;
       align-items: center;
       justify-content: center;
       margin: 0 auto var(--space-lg);
       box-shadow: var(--shadow-glow);
-      font-size: var(--font-size-3xl);
-      font-weight: var(--font-weight-extrabold);
-      color: white;
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      font-size: 40px;
     }
 
     .logo-text {
       font-family: var(--font-display);
       font-size: var(--font-size-3xl);
       font-weight: var(--font-weight-extrabold);
-      background: var(--gradient-primary);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: var(--space-sm);
+      color: var(--color-text-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: var(--space-xs);
+    }
+
+    .logo-text span {
+      color: var(--color-primary);
     }
 
     .logo-subtitle {
@@ -91,13 +93,17 @@ export class LoginComponent extends LitElement {
       gap: var(--space-md);
       margin-bottom: var(--space-md);
       color: var(--color-text-secondary);
+      font-size: var(--font-size-sm);
+      letter-spacing: 0.02em;
     }
 
     .feature-icon {
       width: 24px;
       height: 24px;
       border-radius: var(--radius-md);
-      background: var(--gradient-secondary);
+      background: rgba(0, 255, 163, 0.1);
+      border: 1px solid rgba(0, 255, 163, 0.2);
+      color: var(--color-secondary);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -117,11 +123,12 @@ export class LoginComponent extends LitElement {
     .security-note {
       margin-top: var(--space-xl);
       padding: var(--space-md);
-      background: rgba(59, 130, 246, 0.1);
+      background: rgba(0, 240, 255, 0.05);
       border-radius: var(--radius-md);
-      border: 1px solid rgba(59, 130, 246, 0.3);
-      font-size: var(--font-size-sm);
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      font-size: var(--font-size-xs);
       color: var(--color-text-tertiary);
+      text-align: center;
     }
 
     @keyframes fadeInUp {
@@ -166,8 +173,8 @@ export class LoginComponent extends LitElement {
         return html`
       <div class="login-container">
         <div class="logo">
-          <div class="logo-icon">🔐</div>
-          <div class="logo-text">SecureGate</div>
+          <div class="logo-icon">🛡️</div>
+          <div class="logo-text">Secure<span>Gate</span></div>
           <div class="logo-subtitle">IAM Portal</div>
         </div>
 

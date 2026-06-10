@@ -48,6 +48,17 @@ export class DashboardComponent extends LitElement {
     .stat-card {
       padding: var(--space-xl);
       animation: fadeInUp 0.6s ease-out backwards;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--gradient-primary);
+      opacity: 0.5;
     }
 
     .stat-card:nth-child(1) { animation-delay: 0.2s; }
@@ -55,46 +66,44 @@ export class DashboardComponent extends LitElement {
     .stat-card:nth-child(3) { animation-delay: 0.4s; }
     .stat-card:nth-child(4) { animation-delay: 0.5s; }
 
+    .stat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: var(--space-md);
+    }
+
     .stat-icon {
       width: 48px;
       height: 48px;
-      border-radius: var(--radius-lg);
+      border-radius: var(--radius-md);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: var(--space-md);
       font-size: var(--font-size-2xl);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.1);
     }
 
-    .stat-icon.primary {
-      background: var(--gradient-primary);
-    }
-
-    .stat-icon.secondary {
-      background: var(--gradient-secondary);
-    }
-
-    .stat-icon.success {
-      background: linear-gradient(135deg, var(--color-success) 0%, var(--color-accent) 100%);
-    }
-
-    .stat-icon.warning {
-      background: linear-gradient(135deg, var(--color-warning) 0%, var(--color-error) 100%);
-    }
+    .stat-icon.primary { background: linear-gradient(135deg, rgba(0,240,255,0.2) 0%, rgba(0,240,255,0.05) 100%); color: #00f0ff; border-color: rgba(0,240,255,0.3); }
+    .stat-icon.secondary { background: linear-gradient(135deg, rgba(112,0,255,0.2) 0%, rgba(112,0,255,0.05) 100%); color: #7000ff; border-color: rgba(112,0,255,0.3); }
+    .stat-icon.success { background: linear-gradient(135deg, rgba(0,255,163,0.2) 0%, rgba(0,255,163,0.05) 100%); color: #00ffa3; border-color: rgba(0,255,163,0.3); }
+    .stat-icon.warning { background: linear-gradient(135deg, rgba(255,170,0,0.2) 0%, rgba(255,170,0,0.05) 100%); color: #ffaa00; border-color: rgba(255,170,0,0.3); }
 
     .stat-label {
-      color: var(--color-text-tertiary);
-      font-size: var(--font-size-sm);
+      color: var(--color-text-secondary);
+      font-size: var(--font-size-xs);
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: var(--space-xs);
+      letter-spacing: 0.1em;
+      margin-top: var(--space-xs);
     }
 
     .stat-value {
       font-family: var(--font-display);
-      font-size: var(--font-size-3xl);
-      font-weight: var(--font-weight-bold);
+      font-size: var(--font-size-4xl);
+      font-weight: var(--font-weight-extrabold);
       color: var(--color-text-primary);
+      text-shadow: 0 0 20px rgba(255,255,255,0.1);
     }
 
     .quick-actions {
@@ -210,33 +219,41 @@ export class DashboardComponent extends LitElement {
       <div class="stats-grid">
         <sg-card glass>
           <div class="stat-card">
-            <div class="stat-icon primary">👥</div>
-            <div class="stat-label">Active Sessions</div>
+            <div class="stat-header">
+              <div class="stat-icon primary">🌐</div>
+            </div>
             <div class="stat-value">${this.stats.activeSessions}</div>
+            <div class="stat-label">Active Network Sessions</div>
           </div>
         </sg-card>
 
         <sg-card glass>
           <div class="stat-card">
-            <div class="stat-icon secondary">📋</div>
-            <div class="stat-label">ABAC Policies</div>
+            <div class="stat-header">
+              <div class="stat-icon secondary">🛡️</div>
+            </div>
             <div class="stat-value">${this.stats.policies}</div>
+            <div class="stat-label">Active ABAC Policies</div>
           </div>
         </sg-card>
 
         <sg-card glass>
           <div class="stat-card">
-            <div class="stat-icon success">📊</div>
-            <div class="stat-label">Audit Events</div>
+            <div class="stat-header">
+              <div class="stat-icon success">📈</div>
+            </div>
             <div class="stat-value">${this.stats.auditEvents}</div>
+            <div class="stat-label">Audit Events (24H)</div>
           </div>
         </sg-card>
 
         <sg-card glass>
           <div class="stat-card">
-            <div class="stat-icon warning">⚠️</div>
-            <div class="stat-label">Security Alerts</div>
+            <div class="stat-header">
+              <div class="stat-icon warning">⚠️</div>
+            </div>
             <div class="stat-value">${this.stats.alerts}</div>
+            <div class="stat-label">High-Risk Alerts</div>
           </div>
         </sg-card>
       </div>
