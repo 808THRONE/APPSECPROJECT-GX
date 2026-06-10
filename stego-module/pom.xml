@@ -11,7 +11,7 @@
     <packaging>war</packaging>
 
     <name>SecureGate Steganography Module</name>
-    <description>AES-256-GCM + LSB-DCT Steganography</description>
+    <description>XChaCha20-Poly1305 + DWT Steganography</description>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -29,14 +29,26 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Bouncy Castle for AES-256-GCM -->
-        <!-- TODO: Add org.bouncycastle:bcprov-jdk18on -->
+        <!-- Bouncy Castle for XChaCha20-Poly1305 -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+            <version>1.77</version>
+        </dependency>
         
-        <!-- OpenCV for LSB-DCT -->
-        <!-- TODO: Add org.openpnp:opencv (Java bindings) -->
+        <!-- OpenCV for DWT Steganography -->
+        <dependency>
+            <groupId>org.openpnp</groupId>
+            <artifactId>opencv</artifactId>
+            <version>4.8.1-0</version>
+        </dependency>
         
         <!-- MinIO for S3-compatible storage -->
-        <!-- TODO: Add io.minio:minio -->
+        <dependency>
+            <groupId>io.minio</groupId>
+            <artifactId>minio</artifactId>
+            <version>8.5.7</version>
+        </dependency>
     </dependencies>
 
     <build>
